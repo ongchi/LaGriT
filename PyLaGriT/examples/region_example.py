@@ -1,4 +1,6 @@
 from pylagrit import PyLaGriT
+
+
 lg = PyLaGriT()
 mesh = lg.create()
 mins = (0,0,0)

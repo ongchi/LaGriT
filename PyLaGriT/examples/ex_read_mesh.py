@@ -1,6 +1,7 @@
 #To use pylagrit, import the module.
 import pylagrit
 
+
 #Create your pylagrit session.
 lg = pylagrit.PyLaGriT()
 

@@ -7,8 +7,6 @@ try:
 except ImportError:
     from distutils.core import setup
 
-import os
-
 setup(
     name="pylagrit",
     version="1.0.1",

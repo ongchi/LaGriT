@@ -1,5 +1,7 @@
-from pylagrit import PyLaGriT
 import numpy
+
+from pylagrit import PyLaGriT
+
 
 lg = PyLaGriT()
 

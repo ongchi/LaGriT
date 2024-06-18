@@ -1,5 +1,7 @@
-from pylagrit import PyLaGriT
 import numpy
+
+from pylagrit import PyLaGriT
+
 
 x = numpy.arange(0,10.1,1)
 y = x

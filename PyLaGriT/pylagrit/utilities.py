@@ -1,17 +1,19 @@
 import os
-import numpy as np
+
 from datetime import datetime
+
+import numpy as np
 
 
 def zone_to_zonn(zonefile):
     zonnfile = os.path.splitext(zonefile)[0] + ".zonn"
-    with open(zonefile, "r") as fh:
+    with open(zonefile) as fh:
         fh.readline()
-        lns = fh.readlines()
+        lines = fh.readlines()
     with open(zonnfile, "w") as fout:
         fout.write("zonn\n")
-        for l in lns:
-            fout.write(l)
+        for line in lines:
+            fout.write(line)
 
 
 def spherical_writeFEHM(node_locations, filename_base, title="default"):
@@ -93,7 +95,7 @@ def spherical_writeFEHM(node_locations, filename_base, title="default"):
     coeff_indices.append(neq - 1)
     coeff_indices.append(0)
     # neq + 1 extra 0s for padding
-    for i in range(0, neq + 1):
+    for _ in range(0, neq + 1):
         coeff_indices.append(0)
 
     # index of diagonal entries
@@ -111,7 +113,7 @@ def spherical_writeFEHM(node_locations, filename_base, title="default"):
     # write Voronoi volumes
     count = 1
     for vol in volumes:
-        print("  %1.12e" % vol, end="" if count % 5 else "\n", file=sfile)
+        print(f"  {vol:1.12e}", end="" if count % 5 else "\n", file=sfile)
         count += 1
     if (count - 1) % 5:
         _ = sfile.write("\n")
@@ -151,7 +153,7 @@ def spherical_writeFEHM(node_locations, filename_base, title="default"):
     # write geometric coefficients
     count = 1
     for coef in coeffs:
-        print("  %1.12e" % coef, end="" if count % 5 else "\n", file=sfile)
+        print(f"  {coef:1.12e}", end="" if count % 5 else "\n", file=sfile)
         count += 1
 
     # close stor file
@@ -199,7 +201,7 @@ def spherical_areas(interface_locations):
     :type interface_locations: array_like(float)
     Returns: array of spherical interface areas of size interface_locations
     """
-    areas = 4.0 * np.pi * interface_locations ** 2
+    areas = 4.0 * np.pi * interface_locations**2
     return areas
 
 
@@ -225,7 +227,7 @@ def spherical_volumes(node_locations):
     edges = spherical_faces(node_locations)
     edges = np.insert(edges, 0, node_locations[0])
     edges = np.append(edges, node_locations[np.size(node_locations) - 1])
-    spheres = coeff * edges ** 3
+    spheres = coeff * edges**3
     volumes = np.diff(spheres)
-    assert np.all(volumes > 0), "ERROR: Negative volumes are not good."
+    assert np.all(volumes > 0), "ERROR: Negative volumes are not good."  # noqa: S101
     return volumes
