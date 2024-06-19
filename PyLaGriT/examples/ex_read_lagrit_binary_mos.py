@@ -22,6 +22,6 @@ lg.dump("lagrit_binary.lg")
 lg.close()
 
 lg = pylagrit.PyLaGriT()
-ms_read = lg.read("lagrit_binary.lg")
+ms_read = lg.read_mo("lagrit_binary.lg")
 
-print("Name of mesh object read in should be testmo, is: ", ms_read.name)
+print("Name of mesh object read in should be testmo, is: ", ms_read.name)  # type: ignore

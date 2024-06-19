@@ -6,7 +6,7 @@ from pylagrit import PyLaGriT
 lg = PyLaGriT()
 
 # Create base layer from x=10 to x=21 to match bert02 mesh
-x = np.linspace(10.0, 21, (21.0 - 10.0) / 0.25 + 1)
+x = np.linspace(10.0, 21, int((21.0 - 10.0) / 0.25 + 1))
 y = [0.0, 0.25]
 top = lg.gridder(x, y, elem_type="quad", connect=True)
 
@@ -18,7 +18,8 @@ top.setatt("yic", 0.0)
 
 # Read in top elevations
 d = np.genfromtxt("./Topo_Profile_NS_ERT.csv", delimiter=",", names=True)
-surf_pts = lg.points(x=d["Distance_m"], z=d["Z"], elem_type="quad")
+coords = np.column_stack((d["X"], d["Y"], d["Z"]))
+surf_pts = lg.points(coords, elem_type="quad")
 surf_pts.addatt("z_save", vtype="vdouble", rank="scalar")
 surf_pts.copyatt("zic", "z_save")
 surf_pts.setatt("zic", 0.0)
@@ -45,7 +46,7 @@ stack_files = ["tmp_lay_peat_top.inp"]
 matids = [1]
 
 # Add (15) 2 cm thick layers
-layer.math("sub", 0.02 * 15, "zic")
+layer.math("sub", "zic", value=0.02 * 15)
 layer.dump("tmp_lay1.inp")
 stack_files.append("tmp_lay1.inp")
 # Number of layers in between surfaces, should be length of stack_files - 1
@@ -53,7 +54,7 @@ nlayers = [14]
 matids.append(1)
 
 # Add (15) 5 cm thick layers
-layer.math("sub", 0.05 * 15, "zic")
+layer.math("sub", "zic", value=0.05 * 15)
 layer.dump("tmp_lay2.inp")
 stack_files.append("tmp_lay2.inp")
 # Number of layers in between surfaces, should be length of stack_files - 1
@@ -61,7 +62,7 @@ nlayers.append(14)
 matids.append(2)
 
 # Add (15) 10 cm thick layers
-layer.math("sub", 0.1 * 15, "zic")
+layer.math("sub", "zic", value=0.1 * 15)
 layer.dump("tmp_lay3.inp")
 stack_files.append("tmp_lay3.inp")
 # Number of layers in between surfaces, should be length of stack_files - 1
@@ -69,14 +70,14 @@ nlayers.append(14)
 matids.append(2)
 
 # Add (15) 1 c thick layers
-layer.math("sub", 1 * 15, "zic")
+layer.math("sub", "zic", value=1 * 15)
 layer.dump("tmp_lay3.inp")
 stack_files.append("tmp_lay3.inp")
 # Number of layers in between surfaces, should be length of stack_files - 1
 nlayers.append(14)
 matids.append(2)
 
-layer.math("sub", 2.0 * 15.0, "zic")
+layer.math("sub", "zic", value=2.0 * 15.0)
 layer.dump("tmp_lay4.inp")
 stack_files.append("tmp_lay4.inp")
 nlayers.append(14)

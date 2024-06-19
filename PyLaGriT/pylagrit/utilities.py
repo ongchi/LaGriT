@@ -5,6 +5,28 @@ from datetime import datetime
 import numpy as np
 
 
+# Universal-safe function for ensuring string integrity
+def decode_binary(b) -> str:
+    if isinstance(b, bytes):
+        return b.decode("ascii")
+    else:
+        return b
+
+
+def make_name(base, names):
+    i = 1
+    name = base + str(i)
+    while name in names:
+        i += 1
+        name = base + str(i)
+    return name
+
+
+def minus_self(kvpairs):
+    del kvpairs["self"]
+    return kvpairs
+
+
 def zone_to_zonn(zonefile):
     zonnfile = os.path.splitext(zonefile)[0] + ".zonn"
     with open(zonefile) as fh:

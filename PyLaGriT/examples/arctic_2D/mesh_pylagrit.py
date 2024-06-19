@@ -1,6 +1,6 @@
 import numpy
 
-from pylagrit import PyLaGriT
+from pylagrit import MO, PyLaGriT
 
 
 # Variables
@@ -25,7 +25,7 @@ layer.copyatt("yic", "y_save")
 layer.setatt("yic", 0.0)
 
 # Read in lidar top elevations
-peat_surf_pts = lg.read("surface_coords2.avs")
+peat_surf_pts: MO = lg.read_mo("surface_coords2.avs")  # type: ignore
 peat_surf_pts.addatt("z_save", vtype="vdouble", rank="scalar")
 peat_surf_pts.copyatt("zic", "z_save")
 peat_surf_pts.setatt("zic", 0.0)
@@ -43,7 +43,7 @@ layer.dump("tmp_lay_peat_top.inp")
 peat_surf_pts.delete()
 
 # Read in peat bottom elevations
-peat_bot_pts = lg.read("bottom_peat2.avs")
+peat_bot_pts: MO = lg.read_mo("bottom_peat2.avs")  # type: ignore
 peat_bot_pts.addatt("z_save", vtype="vdouble", rank="scalar")
 peat_bot_pts.copyatt("zic", "z_save")
 peat_bot_pts.setatt("zic", 0.0)

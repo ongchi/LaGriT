@@ -1,9 +1,10 @@
+# TODO: This example does not works
 import optparse
 import os
 
 import numpy
 
-from pylagrit import PyLaGriT
+from pylagrit import MO, PyLaGriT
 
 
 #
@@ -53,7 +54,6 @@ exo_file_fullname = opts.exo_filename
 exo_file_noext, exo_file_ext = os.path.splitext(opts.exo_filename)
 exo_file_base = os.path.basename(opts.exo_filename).rstrip(exo_file_ext)
 exo_file_path = os.path.dirname(opts.exo_filename)
-
 # Output: XML region specifications for the new mesh
 xml_file_fullname = exo_file_path + exo_file_base + ".xml"
 
@@ -76,29 +76,29 @@ with open(dem_file_fullname) as dem_header:
             no_data_value = int(line.split()[1])
             break
 
-print(nx, ny, xll_corner, yll_corner, dx, dy, no_data_value)
+print(nx, ny, xll_corner, yll_corner, dx, dy, no_data_value)  # type: ignore
 dem_header.close()
 
 d = numpy.flipud(numpy.genfromtxt(dem_file_fullname, skip_header=6))
 # plt.matshow(d)
 
 # Create mesh based on ncols and nrows in file, could automatically read
-x = numpy.linspace(xll_corner, dx * (nx - 1), nx)
-y = numpy.linspace(yll_corner, dy * (ny - 1), ny)
+# x = numpy.linspace(xll_corner, dx * (nx - 1), nx)  # type: ignore
+# y = numpy.linspace(yll_corner, dy * (ny - 1), ny)  # type: ignore
 
-x = numpy.arange(xll_corner, dx * nx, dx)
-y = numpy.arange(yll_corner, dy * ny, dy)
+x = numpy.arange(xll_corner, dx * nx, dx)  # type: ignore
+y = numpy.arange(yll_corner, dy * ny, dy)  # type: ignore
 
 xx, yy = numpy.meshgrid(x, y)
 
 # Write avs file
 fh = open(dem_file_base + ".avs", "w")
 # Find number of data values and write avs header
-N = numpy.where(numpy.isnan(d) == False)[0].shape[0]  # noqa: E712
+N = numpy.where(numpy.logical_not(numpy.isnan(d)))[0].shape[0]
 fh.write(str(N) + " 0 0 0 0\n")
 # Collect data into avs format
 # JDM:  Not sure if this should be nx*ny?
-davs = numpy.zeros([nx * ny, 4])
+davs = numpy.zeros([nx * ny, 4])  # type: ignore
 ind = 0
 for i, row in enumerate(d):
     for j, v in enumerate(row):
@@ -111,7 +111,7 @@ fh.close()
 # Crank up pylagrit
 lg = PyLaGriT()
 # Read in elevations in avs fromat
-m = lg.read(dem_file_base + ".avs")
+m: MO = lg.read_mo(dem_file_base + ".avs")  # type: ignore
 # Take a look, change paraview exe
 # Will need to use glyph filter to view points
 # m.paraview(exe='paraview')
@@ -123,10 +123,14 @@ m.copyatt("zic", "z_save")
 m.setatt("zic", 0.0)
 
 # Create connected quad mesh surface
-m2 = lg.create()
+m2: MO = lg.create()
 # m2.createpts_xyz((nx,ny,1),[xx.min(),yy.min(),0.],[xx.max(),yy.max(),0],rz_switch=[1,1,1],connect=True)
 m2.createpts_xyz(
-    (nx, ny, 1), [xx.min(), yy.min(), 0.0], [xx.max(), yy.max(), 0], rz_switch=[1, 1, 1]
+    (nx, ny, 1),  # type: ignore
+    [xx.min(), yy.min(), 0.0],
+    [xx.max(), yy.max(), 1.0],
+    rz_switch=[1, 1, 1],
+    connect=False,
 )
 # Create temporary z value attribute
 m2.addatt("z_save", vtype="vdouble", rank="scalar")
@@ -152,7 +156,7 @@ m3.sendline("quality/edge_max/y")
 # m3.printatt('edgemax')
 m3.minmax("edgemax")
 # Figure out max desired edge length
-max_edge = numpy.sqrt(dx**2 + dy**2)
+max_edge = numpy.sqrt(dx**2 + dy**2)  # type: ignore
 # Identify elements with longer edges
 edel = m3.eltset_attribute("edgemax", max_edge * 2.05, "gt")
 m3.rmpoint_eltset(edel)

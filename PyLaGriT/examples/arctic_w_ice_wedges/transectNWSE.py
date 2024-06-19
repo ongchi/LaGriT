@@ -6,7 +6,7 @@ from pylagrit import PyLaGriT
 lg = PyLaGriT()
 
 # Create base layer, with x matching s from the csv file
-x = np.linspace(0.0, 29.75, (29.75 - 0.0) / 0.25 + 1)
+x = np.linspace(0.0, 29.75, int((29.75 - 0.0) / 0.25 + 1))
 y = [0.0, 0.25]
 top = lg.gridder(x, y, elem_type="quad", connect=True)
 
@@ -46,49 +46,49 @@ stack_files = ["tmp_lay_peat_top.inp"]
 matids = [1]
 
 # Add (2) 1 cm thick layers
-layer.math("sub", 0.01 * 2, "zic")
+layer.math("sub", "zic", value=0.01 * 2)
 layer.dump("tmp_lay1.inp")
 stack_files.append("tmp_lay1.inp")
 nlayers = [1]
 matids.append(1)
 
 # Add (6) 2 cm thick layers
-layer.math("sub", 0.02 * 6, "zic")
+layer.math("sub", "zic", value=0.02 * 6)
 layer.dump("tmp_lay2.inp")
 stack_files.append("tmp_lay2.inp")
 nlayers.append(5)
 matids.append(2)
 
 # Add (8) 2 cm thick layers
-layer.math("sub", 0.02 * 8, "zic")
+layer.math("sub", "zic", value=0.02 * 8)
 layer.dump("tmp_lay3.inp")
 stack_files.append("tmp_lay3.inp")
 nlayers.append(7)
 matids.append(3)
 
 # Add (15) 5 cm thick layers
-layer.math("sub", 0.05 * 15, "zic")
+layer.math("sub", "zic", value=0.05 * 15)
 layer.dump("tmp_lay4.inp")
 stack_files.append("tmp_lay4.inp")
 nlayers.append(14)
 matids.append(3)
 
 # Add (15) 10 cm thick layers
-layer.math("sub", 0.1 * 15, "zic")
+layer.math("sub", "zic", value=0.1 * 15)
 layer.dump("tmp_lay5.inp")
 stack_files.append("tmp_lay5.inp")
 nlayers.append(14)
 matids.append(3)
 
 # Add (15) 1 m thick layers
-layer.math("sub", 1 * 15, "zic")
+layer.math("sub", "zic", value=1 * 15)
 layer.dump("tmp_lay6.inp")
 stack_files.append("tmp_lay6.inp")
 nlayers.append(14)
 matids.append(3)
 
 # Add (15) 2 m thick layers
-layer.math("sub", 2.0 * 15.0, "zic")
+layer.math("sub", "zic", value=2.0 * 15.0)
 layer.dump("tmp_lay7.inp")
 stack_files.append("tmp_lay7.inp")
 nlayers.append(14)

@@ -6,19 +6,14 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from itertools import product
 from subprocess import call
+from typing import List, Optional, Tuple, cast
 from xml.dom import minidom
 
 import numpy
 
 from pexpect import spawn
 
-
-# Universal-safe function for ensuring string integrity
-def _decode_binary(b) -> str:
-    if isinstance(b, bytes):
-        return b.decode("ascii")
-    else:
-        return b
+from .utilities import decode_binary, make_name, minus_self
 
 
 catch_errors = True
@@ -92,9 +87,9 @@ class PyLaGriT(spawn):
         else:
             kwargs["timeout"] = timeout
             super().__init__(self.lagrit_exe, **kwargs)
-            self.expect()
+            self.expect("Enter a command")
             if verbose:
-                print(_decode_binary(self.before))
+                print(decode_binary(self.before))
 
     def run_batch(self):
         self.fh.write("finish\n")
@@ -106,29 +101,23 @@ class PyLaGriT(spawn):
             call(self.lagrit_exe + " < " + self.batchfile, shell=True, stdout=fout)  # noqa: S602
             fout.close()
 
-    def expect(self, expectstr="Enter a command", timeout=8640000.0):
+    def sendcmd(self, s, verbose=True, expectstr="Enter a command"):
         if self.batch:
-            print("expect disabled during batch mode")
+            self.fh.write(s + "\n")
         else:
-            super().expect(expectstr, timeout=timeout)
-
-    def sendline(self, cmd, verbose=True, expectstr="Enter a command"):
-        if self.batch:
-            self.fh.write(cmd + "\n")
-        else:
-            super().sendline(cmd)
-            self.expect(expectstr=expectstr)
+            super().sendline(s)
+            self.expect(expectstr)
             if verbose and self.verbose:
-                print(_decode_binary(self.before))
+                print(decode_binary(self.before))
 
             if catch_errors:
-                for _line in _decode_binary(self.before).split("\n"):
+                for _line in decode_binary(self.before).split("\n"):
                     if "ERROR" in _line:
                         raise Exception(_line)
                     elif "WARNING" in _line:
                         warnings.warn(_line, category=LaGriT_Warning, stacklevel=2)
 
-    def interact(self, escape_character="^"):
+    def interact(self, escape_character="^", input_filter=None, output_filter=None):
         if self.batch:
             print("Interactive mode unavailable during batch mode")
         else:
@@ -141,7 +130,11 @@ class PyLaGriT(spawn):
             )
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
             print(self.after)
-            super().interact(escape_character=escape_character)
+            super().interact(
+                escape_character=escape_character,
+                input_filter=input_filter,
+                output_filter=output_filter,
+            )
 
     def cmo_status(self, cmo=None, brief=False, verbose=True):
         cmd = "cmo/status"
@@ -149,9 +142,11 @@ class PyLaGriT(spawn):
             cmd += "/" + cmo
         if brief:
             cmd += "/brief"
-        self.sendline(cmd, verbose=verbose)
+        self.sendcmd(cmd, verbose=verbose)
 
-    def read(self, filename, filetype=None, name=None, binary=False):
+    def read_mo(
+        self, filename, filetype=None, name=None, binary=False
+    ) -> Optional["MO" | List["MO"]]:
         """
         Read in mesh
 
@@ -172,21 +167,13 @@ class PyLaGriT(spawn):
             >>> lg = pylagrit.PyLaGriT()
             >>> # Create a mesh object and dump it to a gmv file 'test.gmv'.
             >>> mo = lg.create(name="test")
-            >>> mo.createpts_brick_xyz(
-            ...     (5, 5, 5),
-            ...     (0, 0, 0),
-            ...     (
-            ...         5,
-            ...         5,
-            ...         5,
-            ...     ),
-            ... )
+            >>> mo.createpts_brick_xyz((5, 5, 5), (0, 0, 0), (5, 5, 5))
             >>> mo.dump("test.gmv")
             >>> mo.dump("test.avs")
             >>> mo.dump("test.lg")
-            >>> mo1 = lg.read("test.gmv")
-            >>> mo2 = lg.read("test.avs")
-            >>> mo3 = lg.read("test.lg", name="test")
+            >>> mo1 = lg.read_mo("test.gmv")
+            >>> mo2 = lg.read_mo("test.avs")
+            >>> mo3 = lg.read_mo("test.lg", name="test")
 
         Example 2 - Reading in LaGriT binary file, autodetect mesh object name
             >>> # To use pylagrit, import the module.
@@ -208,51 +195,56 @@ class PyLaGriT(spawn):
             >>> lg.dump("lagrit_binary.lg")
             >>> lg.close()
             >>> lg = pylagrit.PyLaGriT()
-            >>> ms_read = lg.read("lagrit_binary.lg")
+            >>> ms_read = lg.read_mo("lagrit_binary.lg")
             >>> print 'Name of mesh object read in should be testmo, is: ', ms_read.name
         """
 
         # If filetype is lagrit, name is irrelevant
-        if filetype == "lagrit" or filename.split(".")[-1] in [
+        islg = filetype == "lagrit" or filename.split(".")[-1] in [
             "lg",
             "lagrit",
             "LaGriT",
-        ]:
-            islg = True
-        else:
-            islg = False
+        ]
+
         cmd = ["read", filename]
+
         if filetype is not None:
             cmd.append(filetype)
+
         if islg:
             cmd.append("dum")
         else:
             if name is None:
                 name = make_name("mo", self.mo.keys())
             cmd.append(name)
+
         if binary:
             cmd.append("binary")
-        self.sendline("/".join(cmd))
+
+        self.sendcmd("/".join(cmd))
+
         # If format lagrit, cmo read in will not be set to name
         if islg and not self.batch:
-            self.sendline("cmo/status/brief", verbose=False)
+            self.sendcmd("cmo/status/brief", verbose=False)
             # dump lagrit doesn't seem to ever dump multiple mos now???
             mos = []
-            for line in _decode_binary(self.before).splitlines():
+            for line in decode_binary(self.before).splitlines():
                 if "Mesh Object name:" in line:
                     nm = line.split(":")[1].strip()
                     self.mo[nm] = MO(nm, self)
                     mos.append(self.mo[nm])
             if len(mos) == 1:
                 if name is not None and name != mos[0].name:
-                    self.sendline("cmo/copy/" + name + "/" + mos[0].name)
-                    self.sendline("cmo/release/" + mos[0].name)
+                    self.sendcmd("cmo/copy/" + name + "/" + mos[0].name)
+                    self.sendcmd("cmo/release/" + mos[0].name)
                 return mos[0]
             elif len(mos) > 1:
                 if name is not None:
                     print("Multiple mesh objects exist, 'name' option will be ignored")
                 return mos
         else:
+            if name is None:
+                name = make_name("mo", self.mo.keys())
             self.mo[name] = MO(name, self)
             return self.mo[name]
 
@@ -289,7 +281,7 @@ class PyLaGriT(spawn):
                 for i in range(elem_int):
                     fh.write(" %d" % conn[i + 1])
                 fh.write("\n")
-        return self.read(avs_filename)
+        return self.read_mo(avs_filename)
 
     def read_sheetij(
         self,
@@ -381,8 +373,8 @@ class PyLaGriT(spawn):
             raise ValueError("Argument flip must be: 'x', 'y', 'xy', or 'none'")
 
         # Create new mesh object with given name
-        self.sendline(f"cmo/create/{name}")
-        self.sendline(f"cmo/select/{name}")
+        self.sendcmd(f"cmo/create/{name}")
+        self.sendcmd(f"cmo/select/{name}")
 
         # Read in elevation file and append to mesh
         cmd = [
@@ -398,7 +390,7 @@ class PyLaGriT(spawn):
             file_type,
             data_type,
         ]
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
         self.mo[name] = MO(name, self)
         return self.mo[name]
@@ -518,8 +510,8 @@ class PyLaGriT(spawn):
 
         hexmesh.addatt("mod_bnds", vtype="VINT", rank="scalar", length="nelements")
         hexmesh.copyatt("zic", attname_sink="mod_bnds", mo_src=mtrl_surface)
-        self.sendline(f"cmo/printatt/{hexmesh.name}/mod_bnds/minmax")
-        self.sendline(f"cmo/printatt/{mtrl_surface.name}/zic/minmax")
+        self.sendcmd(f"cmo/printatt/{hexmesh.name}/mod_bnds/minmax")
+        self.sendcmd(f"cmo/printatt/{mtrl_surface.name}/zic/minmax")
 
         hexmesh.addatt("pts_topbot")
         hexmesh.setatt("pts_topbot", 1.0)
@@ -587,7 +579,7 @@ class PyLaGriT(spawn):
             elif not reset:
                 cmd.append("noreset")
 
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def addmesh(self, mo1, mo2, style="add", name=None, *args):
         if isinstance(mo1, MO):
@@ -616,7 +608,7 @@ class PyLaGriT(spawn):
                 cmd = "/".join([cmd, a])
             elif isinstance(a, list):
                 cmd = "/".join([cmd, " ".join([str(v) for v in a])])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.mo[name] = MO(name, self)
         return self.mo[name]
 
@@ -668,7 +660,7 @@ class PyLaGriT(spawn):
         if name is None:
             name = make_name("mo", self.mo.keys())
         cmd = "/".join(["addmesh", "intersect", name, psetname, mo1name, mo2name])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.pset[name] = PSet(name, self)
         return self.pset[name]
 
@@ -715,11 +707,17 @@ class PyLaGriT(spawn):
             elif ":" in ln:
                 v = ln.split(":")
                 if v[0].strip() == "lagrit_exe":
-                    self.lagrit_exe = v[1].strip().replace('"', "").replace("'", "")
+                    self.lagrit_exe = os.path.expanduser(
+                        v[1].strip().replace('"', "").replace("'", "")
+                    )
                 elif v[0].strip() == "gmv_exe":
-                    self.gmv_exe = v[1].strip().replace('"', "").replace("'", "")
+                    self.gmv_exe = os.path.expanduser(
+                        v[1].strip().replace('"', "").replace("'", "")
+                    )
                 elif v[0].strip() == "paraview_exe":
-                    self.paraview_exe = v[1].strip().replace('"', "").replace("'", "")
+                    self.paraview_exe = os.path.expanduser(
+                        v[1].strip().replace('"', "").replace("'", "")
+                    )
                 else:
                     print("WARNING: unrecognized .pylagritrc line '" + ln.strip() + "'")
             else:
@@ -734,37 +732,50 @@ class PyLaGriT(spawn):
         resetpts_itp=True,
         external=False,
         append=None,
-    ):
+    ) -> "MO":
         if name is None:
             name = make_name("mo", self.mo.keys())
+
+        stride = [str(v) for v in stride]
+        cmd = ["extract/surfmesh", ",".join(stride), name]
+
         if cmo_in is not None:
             if not isinstance(cmo_in, MO):
-                print(
-                    "ERROR: MO object or name of mesh object as a string expected for cmo_in"
+                raise ValueError(
+                    "MO object or name of mesh object as a string expected for cmo_in"
                 )
-                return
-        if resetpts_itp:
-            cmo_in.resetpts_itp()
-        if reorder:
-            cmo_in.sendline("createpts/median")
-            self.sendline(
-                "/".join(
-                    ["sort", cmo_in.name, "index/ascending/ikey/itetclr zmed ymed xmed"]
+
+            if resetpts_itp:
+                cmo_in.resetpts_itp()
+
+            if reorder:
+                cmo_in.sendline("createpts/median")
+                self.sendcmd(
+                    "/".join(
+                        [
+                            "sort",
+                            cmo_in.name,
+                            "index/ascending/ikey/itetclr zmed ymed xmed",
+                        ]
+                    )
                 )
-            )
-            self.sendline("/".join(["reorder", cmo_in.name, "ikey"]))
-            self.sendline("/".join(["cmo/DELATT", cmo_in.name, "xmed"]))
-            self.sendline("/".join(["cmo/DELATT", cmo_in.name, "ymed"]))
-            self.sendline("/".join(["cmo/DELATT", cmo_in.name, "zmed"]))
-            self.sendline("/".join(["cmo/DELATT", cmo_in.name, "ikey"]))
-        stride = [str(v) for v in stride]
-        cmd = ["extract/surfmesh", ",".join(stride), name, cmo_in.name]
+                self.sendcmd("/".join(["reorder", cmo_in.name, "ikey"]))
+                self.sendcmd("/".join(["cmo/DELATT", cmo_in.name, "xmed"]))
+                self.sendcmd("/".join(["cmo/DELATT", cmo_in.name, "ymed"]))
+                self.sendcmd("/".join(["cmo/DELATT", cmo_in.name, "zmed"]))
+                self.sendcmd("/".join(["cmo/DELATT", cmo_in.name, "ikey"]))
+
+            cmd.append(cmo_in.name)
+
         if external:
             cmd.append("external")
+
         if append:
             cmd.append(append)
-        self.sendline("/".join(cmd))
+
+        self.sendcmd("/".join(cmd))
         self.mo[name] = MO(name, self)
+
         return self.mo[name]
 
     def read_script(self, fname):
@@ -783,7 +794,7 @@ class PyLaGriT(spawn):
             # Remove newlines and spaces
             c = "".join(c.split())
             if len(c) != 0 and "finish" not in c:
-                self.sendline(c)
+                self.sendcmd(c)
 
     def read_att(self, fname, attributes, mesh=None, operation="add"):
         """
@@ -802,7 +813,7 @@ class PyLaGriT(spawn):
         cmd = "/".join(
             ["cmo", "readatt", mesh.name, ",".join(attributes), operation, fname]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
         return mesh
 
@@ -826,7 +837,7 @@ class PyLaGriT(spawn):
         """
 
         for key, value in kwargs.items():
-            self.sendline(f"define / {key} / {value}")
+            self.sendcmd(f"define / {key} / {value}")
 
     def convert(self, pattern, new_ft):
         """
@@ -894,11 +905,11 @@ class PyLaGriT(spawn):
             os.symlink(path, "old_format")
 
             # Run the commands in lagrit.
-            self.sendline(f"read/{old_ft}/old_format/temp_cmo")
-            self.sendline(f"dump/{new_ft}/{fname}.{new_ft}/temp_cmo")
+            self.sendcmd(f"read/{old_ft}/old_format/temp_cmo")
+            self.sendcmd(f"dump/{new_ft}/{fname}.{new_ft}/temp_cmo")
 
             # Clean up created data.
-            self.sendline("cmo/release/temp_cmo")
+            self.sendcmd("cmo/release/temp_cmo")
             os.unlink("old_format")
 
     def merge(self, mesh_objs, elem_type="tet", name=None):
@@ -942,7 +953,7 @@ class PyLaGriT(spawn):
             # mo_merge = self.create(elem_type=elem_type)
             for mo in mesh_objs:
                 cmd = "/".join(["addmesh", "merge", name, name, mo.name])
-                self.sendline(cmd)
+                self.sendcmd(cmd)
                 # mo_merge = self.addmesh_merge(mo_merge,mo)
             # return mo_merge
             # return reduce(self.addmesh_merge, mesh_objs)
@@ -950,7 +961,9 @@ class PyLaGriT(spawn):
             raise ValueError("Must provide at least two objects to merge.")
         return self.mo[name]
 
-    def create(self, elem_type="tet", name=None, npoints=0, nelements=0):
+    def create(
+        self, elem_type="tet", name: Optional[str] = None, npoints=0, nelements=0
+    ):
         """
         Create a Mesh Object
 
@@ -972,9 +985,10 @@ class PyLaGriT(spawn):
         Returns: MO
         """
 
-        if type(name) is type(None):
+        if name is None:
             name = make_name("mo", self.mo.keys())
-        self.sendline("cmo/create/%s/%i/%i/%s" % (name, npoints, nelements, elem_type))
+
+        self.sendcmd("cmo/create/%s/%i/%i/%s" % (name, npoints, nelements, elem_type))
         self.mo[name] = MO(name, self)
         return self.mo[name]
 
@@ -1017,7 +1031,7 @@ class PyLaGriT(spawn):
         """Create a triplane mesh object."""
         return self.create(elem_type="triplane", **minus_self(locals()))
 
-    def copy(self, mo, name=None):
+    def copy(self, mo, name: Optional[str] = None):
         """
         Copy Mesh Object
 
@@ -1025,7 +1039,7 @@ class PyLaGriT(spawn):
         """
 
         # Check if name was specified, if not just generate one.
-        if type(name) is type(None):
+        if name is None:
             name = make_name("mo", self.mo.keys())
 
         # Create the MO in lagrit and the PyLaGriT object.
@@ -1051,7 +1065,7 @@ class PyLaGriT(spawn):
             cmd += ",".join([mo.name for mo in mos])
         if filetype == "ascii":
             cmd.append("ascii")
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def tri_mo_from_polyline(
         self, coords, order="clockwise", filename="polyline.inp", name=None
@@ -1092,7 +1106,7 @@ class PyLaGriT(spawn):
         # Check if name was specified, if not just generate one.
         if type(name) is type(None):
             name = make_name("mo", self.mo.keys())
-        motmp = self.read(filename)
+        motmp = cast(MO, self.read_mo(filename))
         motri = motmp.copypts(elem_type="tri")
         motmp.delete()
         self.mo[name] = motri
@@ -1192,7 +1206,7 @@ class PyLaGriT(spawn):
         maxs,
         elem_type,
         clip="under",
-        hard_bound="min",
+        hard_bound: str | Tuple[str, str, str] = "min",
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
         connect=True,
@@ -1285,11 +1299,11 @@ class PyLaGriT(spawn):
             dxyz,
             mins,
             maxs,
-            clip="under",
-            hard_bound="min",
-            rz_switch=(1, 1, 1),
-            rz_value=(1, 1, 1),
-            connect=True,
+            clip=clip,
+            hard_bound=hard_bound,
+            rz_switch=rz_switch,
+            rz_value=rz_value,
+            connect=connect,
         )
         return mo
 
@@ -1483,7 +1497,7 @@ class PyLaGriT(spawn):
         elif connect:
             m.connect()
 
-        self.sendline(f"cmo/printatt/{m.name}/-xyz- minmax")
+        self.sendcmd(f"cmo/printatt/{m.name}/-xyz- minmax")
         return m
 
     def points(self, coords, connect=False, elem_type="tet", filename="points.inp"):
@@ -1516,33 +1530,34 @@ class PyLaGriT(spawn):
             >>> m = lg.points(coords, elem_type="tet", connect=True)
             >>> m.paraview()
         """
-        dim = 0
         coords = numpy.array(coords)
-        ix = numpy.all(numpy.diff(coords[:, 0]) == 0)
-        if not ix:
-            dim += 1
-        iy = numpy.all(numpy.diff(coords[:, 1]) == 0)
-        if not iy:
-            dim += 1
-        iz = numpy.all(numpy.diff(coords[:, 2]) == 0)
-        if not iz:
-            dim += 1
-        if elem_type in ["line"] and dim != 1:
-            print("Error: Coordinates must form line for elem_type 'line'")
-            return
-        if elem_type in ["tri", "quad"] and dim != 2:
-            print(
-                "Error: Coordinates must form plane for elem_type '"
-                + str(elem_type)
-                + "'"
-            )
-            return
-        if elem_type in ["tet", "hex"] and dim != 3:
-            print(
-                "Error: 3D coordinates required for elem_type '" + str(elem_type) + "'"
-            )
-            print("Set elem_type to a 2D format like 'quad' or 'triplane'")
-            return
+        # TODO: validation for point set
+        # dim = 0
+        # ix = numpy.all(numpy.diff(coords[:, 0]) == 0)
+        # if not ix:
+        #     dim += 1
+        # iy = numpy.all(numpy.diff(coords[:, 1]) == 0)
+        # if not iy:
+        #     dim += 1
+        # iz = numpy.all(numpy.diff(coords[:, 2]) == 0)
+        # if not iz:
+        #     dim += 1
+        # if elem_type in ["line"] and dim != 1:
+        #     print("Error: Coordinates must form line for elem_type 'line'")
+        #     return
+        # if elem_type in ["tri", "quad"] and dim != 2:
+        #     print(
+        #         "Error: Coordinates must form plane for elem_type '"
+        #         + str(elem_type)
+        #         + "'"
+        #     )
+        #     return
+        # if elem_type in ["tet", "hex"] and dim != 3:
+        #     print(
+        #         "Error: 3D coordinates required for elem_type '" + str(elem_type) + "'"
+        #     )
+        #     print("Set elem_type to a 2D format like 'quad' or 'triplane'")
+        #     return
 
         outfile = open(filename, "w")
         outfile.write("   " + str(len(coords)) + " 0 0 0 0\n")
@@ -1574,7 +1589,7 @@ class PyLaGriT(spawn):
 class MO:
     """Mesh object class"""
 
-    def __init__(self, name, parent):
+    def __init__(self, name: str, parent: PyLaGriT):
         self.name = name
         self._parent = parent
         self.pset = {}
@@ -1587,8 +1602,10 @@ class MO:
         return self.name
 
     def sendline(self, cmd, verbose=True, expectstr="Enter a command"):
-        self._parent.sendline("cmo select " + self.name, verbose=verbose)
-        self._parent.sendline(cmd, verbose=verbose, expectstr=expectstr)
+        self._parent.sendcmd(
+            "cmo select " + self.name, verbose=verbose, expectstr=expectstr
+        )
+        self._parent.sendcmd(cmd, verbose=verbose, expectstr=expectstr)
 
     @property
     def mins(self):
@@ -1601,86 +1618,86 @@ class MO:
     @property
     def xmin(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return float(strarr[4].split()[1])
 
     @property
     def xmax(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return float(strarr[4].split()[2])
 
     @property
     def xlength(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return int(strarr[4].split()[4])
 
     @property
     def ymin(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return float(strarr[5].split()[1])
 
     @property
     def ymax(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return float(strarr[5].split()[2])
 
     @property
     def ylength(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return int(strarr[5].split()[4])
 
     @property
     def zmin(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return float(strarr[6].split()[1])
 
     @property
     def zmax(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return float(strarr[6].split()[2])
 
     @property
     def zlength(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return int(strarr[6].split()[4])
 
     @property
     def nnodes(self):
         self.status(brief=True, verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return int(strarr[7].split()[4])
 
     @property
     def nelems(self):
         self.status(brief=True, verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return int(strarr[7].split()[-1])
 
     @property
     def ndim_geo(self):
         self.status(brief=True, verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return int(strarr[8].split()[3])
 
     @property
     def ndim_topo(self):
         self.status(brief=True, verbose=False)
-        strarr = self._parent.before.splitlines()
+        strarr = cast(bytes, self._parent.before).splitlines()
         return int(strarr[9].split()[3])
 
     @property
     def elem_type(self):
         self.status(brief=True, verbose=False)
-        strarr = self._parent.before.splitlines()
-        etype = _decode_binary(strarr[8].split()[7])
+        strarr = cast(bytes, self._parent.before).splitlines()
+        etype = decode_binary(strarr[8].split()[7])
         if etype == "tri":
             if self.ndim_geo == 2:
                 etype = "triplane"
@@ -1707,54 +1724,61 @@ class MO:
         self.sendline(cmd)
 
     def printatt(
-        self, attname=None, stride=(1, 0, 0), pset=None, eltset=None, ptype="value"
+        self,
+        attname: Optional[str] = None,
+        stride=(1, 0, 0),
+        pset=None,
+        eltset=None,
+        ptype="value",
     ):
         stride = [str(v) for v in stride]
+
         if attname is None:
             attname = "-all-"
-        if pset is None and eltset is None:
+
+        if pset is not None:
+            if isinstance(pset, PSet):
+                setname = pset.name
+            elif isinstance(pset, str):
+                setname = pset
+            else:
+                print(
+                    "ERROR: PSet object or name of PSet object as a string expected for pset"
+                )
+                return
+            cmd = "/".join(
+                [
+                    "cmo/printatt",
+                    self.name,
+                    attname,
+                    ptype,
+                    ",".join(["pset", "get", setname]),
+                ]
+            )
+        elif eltset is not None:
+            if isinstance(eltset, EltSet):
+                setname = eltset.name
+            elif isinstance(eltset, str):
+                setname = eltset
+            else:
+                print(
+                    "ERROR: EltSet object or name of EltSet object as a string expected for eltset"
+                )
+                return
+            cmd = "/".join(
+                [
+                    "cmo/printatt",
+                    self.name,
+                    attname,
+                    ptype,
+                    ",".join(["eltset", "get", setname]),
+                ]
+            )
+        else:
             cmd = "/".join(
                 ["cmo/printatt", self.name, attname, ptype, ",".join(stride)]
             )
-        else:
-            if pset is not None:
-                if isinstance(pset, PSet):
-                    setname = pset.name
-                elif isinstance(pset, str):
-                    setname = pset
-                else:
-                    print(
-                        "ERROR: PSet object or name of PSet object as a string expected for pset"
-                    )
-                    return
-                cmd = "/".join(
-                    [
-                        "cmo/printatt",
-                        self.name,
-                        attname,
-                        ptype,
-                        ",".join(["pset", "get", setname]),
-                    ]
-                )
-            if eltset is not None:
-                if isinstance(eltset, EltSet):
-                    setname = eltset.name
-                elif isinstance(eltset, str):
-                    setname = eltset
-                else:
-                    print(
-                        "ERROR: EltSet object or name of EltSet object as a string expected for eltset"
-                    )
-                    return
-                cmd = "/".join(
-                    [
-                        "cmo/printatt",
-                        self.name,
-                        attname,
-                        ptype,
-                        ",".join(["eltset", "get", setname]),
-                    ]
-                )
+
         self.sendline(cmd)
 
     def delatt(self, attnames, force=True):
@@ -2035,8 +2059,9 @@ class MO:
                 yield out
             finally:
                 sys.stdout, sys.stderr = oldout, olderr
-                out[0] = out[0].getvalue()
-                out[1] = out[1].getvalue()
+                # FIXME: out is possibly unbound
+                out[0] = out[0].getvalue()  # type: ignore
+                out[1] = out[1].getvalue()  # type: ignore
 
         _temp = self._parent.verbose
         self._parent.verbose = True
@@ -2047,7 +2072,7 @@ class MO:
         atts = {}
         in_attributes_section = False
 
-        for line in out[0].replace("\r", "").split("\n"):
+        for line in cast(str, out[0]).replace("\r", "").split("\n"):
             lline = line.strip().lower()
             split = line.strip().split()
 
@@ -2585,7 +2610,7 @@ class MO:
         else:
             ascii = "binary"
         cmd = "/".join(["eltset", name, "write", filename_root, ascii])
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
 
     def rmpoint_pset(self, pset, itype="exclusive", compress=True, resetpts_itp=True):
         if isinstance(pset, PSet):
@@ -3166,19 +3191,19 @@ class MO:
         self.sendline("dump/avs/" + filename + "/" + self.name)
         os.system(self._parent.paraview_exe + " " + filename)  # noqa: S605
 
-    def dump(self, filename=None, format=None, *args):
+    def dump(self, filename: Optional[str] = None, format: Optional[str] = None, *args):
         if filename is None and format is None:
             print("Error: At least one of either filename or format option is required")
             return
         # if format is not None: cmd = '/'.join(['dump',format])
         # else: cmd = 'dump'
-        if filename and format:
+        if filename is not None and format is not None:
             if format in ["fehm", "zone_outside", "zone_outside_minmax"]:
                 filename = filename.split(".")[0]
             if format == "stor" and len(args) == 0:
                 filename = filename.split(".")[0]
             cmd = "/".join(["dump", format, filename, self.name])
-        elif format:
+        elif format is not None:
             if format in ["avs", "avs2"]:
                 filename = self.name + ".inp"
             elif format == "fehm":
@@ -3191,11 +3216,17 @@ class MO:
                 filename = self.name + ".lg"
             elif format == "exo":
                 filename = self.name + ".exo"
+            else:
+                raise NotImplementedError("Unsupported format")
             cmd = "/".join(["dump", format, filename, self.name])
-        else:
+        elif filename is not None:
             cmd = "/".join(["dump", filename, self.name])
+        else:
+            cmd = "/".join(["dump", self.name + ".inp"])
+
         for arg in args:
             cmd = "/".join([cmd, str(arg)])
+
         self.sendline(cmd)
 
     def dump_avs2(
@@ -3669,7 +3700,7 @@ class MO:
         mins,
         maxs,
         clip="under",
-        hard_bound="min",
+        hard_bound: str | Tuple[str, str, str] = "min",
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
         connect=True,
@@ -3700,7 +3731,7 @@ class MO:
 
         """
         if isinstance(hard_bound, str):
-            hard_bound = numpy.array([hard_bound, hard_bound, hard_bound])
+            hard_bound = (hard_bound, hard_bound, hard_bound)
         if isinstance(clip, str):
             clip = numpy.array([clip, clip, clip])
         dxyz = numpy.array(dxyz)
@@ -4596,11 +4627,11 @@ class MO:
             cmd.append(xy_subset)
         cmd.append(" &")
         self.sendline("/".join(cmd), expectstr="\r\n")
-        self._parent.sendline(
+        self._parent.sendcmd(
             " ".join([filelist[0], str(matids[0]), "/ &"]), expectstr="\r\n"
         )
         for f, nl, md in zip(filelist[1:-1], nlayers[0:-1], matids[1:-1]):
-            self._parent.sendline(
+            self._parent.sendcmd(
                 " ".join([f, str(md), str(nl), "/ &"]), expectstr="\r\n"
             )
         cmd = [" ".join([filelist[-1], str(matids[-1]), str(nlayers[-1])])]
@@ -4616,7 +4647,7 @@ class MO:
             cmd.append("dpinch " + str(dpinchout_opt[0]))
             cmd.append("dmin " + str(dpinchout_opt[1]))
         if not len(cmd) == 0:
-            self._parent.sendline("/".join(cmd))
+            self._parent.sendcmd("/".join(cmd))
 
     def stack_fill(self, name=None):
         if name is None:
@@ -4762,7 +4793,7 @@ class MO:
                     "amr " + str(prd_choice),
                 ]
             )
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
 
     def regnpts(
         self,
@@ -5786,17 +5817,3 @@ class FaceSet:
 
     def __repr__(self):
         return str(self.filename)
-
-
-def make_name(base, names):
-    i = 1
-    name = base + str(i)
-    while name in names:
-        i += 1
-        name = base + str(i)
-    return name
-
-
-def minus_self(kvpairs):
-    del kvpairs["self"]
-    return kvpairs

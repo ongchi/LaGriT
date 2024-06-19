@@ -65,9 +65,9 @@ class TestPyLaGriT(unittest.TestCase):
 
         lg = self.lg
         with suppress_stdout():
-            mo1 = lg.read("avs", "contour_file.avs")
-            mo2 = lg.read("avs", "contour_file.avs")
-            mo3 = lg.read("avs", "contour_file.avs")
+            mo1 = lg.read_mo("avs", "contour_file.avs")
+            mo2 = lg.read_mo("avs", "contour_file.avs")
+            mo3 = lg.read_mo("avs", "contour_file.avs")
             new_mo = lg.merge([mo1, mo2, mo3])
         # Test that the merge created a new mesh object.
         if type(new_mo) is type(None):

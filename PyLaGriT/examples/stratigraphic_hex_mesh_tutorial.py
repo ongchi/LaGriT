@@ -266,7 +266,7 @@ eltset3_fp.setatt("itetclr", 6)
 # 06 Define a polyline and truncate the exterior boundary of the mesh with the polyline
 # ********************************************
 # Read boundary polygon file
-mobndry = lg.read("basin_bnd_ply_rescale.inp")
+mobndry = lg.read_mo("basin_bnd_ply_rescale.inp")
 
 # Extrude the polyline into a vertical surface
 mofence = mobndry.extrude(3200, "const", "volume", [0, 0, -1])

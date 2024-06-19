@@ -6,6 +6,6 @@ mhex = lg.read_fehm("fehm.grid")
 # mhex.paraview()
 
 mtet = lg.create(elem_type="tet")
-mtet = mhex.copypts()
+mtet = mhex.copypts()  # type: ignore
 mtet.connect()
 mtet.paraview()

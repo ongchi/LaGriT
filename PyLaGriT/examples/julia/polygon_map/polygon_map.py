@@ -1,6 +1,6 @@
 import numpy as np
 
-from pylagrit import PyLaGriT
+from pylagrit import MO, PyLaGriT
 
 
 # User parameters #######################
@@ -14,7 +14,7 @@ polygon_file = "2d_mesh.avs"
 lg = PyLaGriT()
 
 # Read in polygon delineation mesh
-mopoly = lg.read(polygon_file)
+mopoly: MO = lg.read_mo(polygon_file)  # type: ignore
 
 # Create quad using polygon min and max coordinates
 xs = np.linspace(mopoly.xmin, mopoly.xmax, nx)
