@@ -1,10 +1,10 @@
-import glob
 import os
 import warnings
 import xml.etree.ElementTree as ET
 
 from collections import OrderedDict
 from itertools import product
+from pathlib import Path
 from subprocess import call
 from typing import List, Optional, Tuple, cast
 from xml.dom import minidom
@@ -839,24 +839,23 @@ class PyLaGriT(spawn):
         for key, value in kwargs.items():
             self.sendcmd(f"define / {key} / {value}")
 
-    def convert(self, pattern, new_ft):
+    def convert(self, filename, to_type: str):
         """
-        Convert File(s)
+        Convert File
 
-        For each file of the pattern, creates a new file in the new_ft format.
+        For each file of the pattern, creates a new file in the to_format format.
         The new files will be inside the directory that the LaGriT object was
         instantiated. The name of each file will be the same as the original
-        file with the extension changed to new_ft.
+        file with the extension changed to to_type.
 
         Supports conversion from avs, and gmv files.
         Supports conversion to avs, exo, and gmv files.
 
-        :param pattern: Path, name or unix style file pattern of files to be
-                        converted.
+        :param filename: name of the file to be converted.
         :type  pattern: str
 
-        :param new_ft: New format to convert files.
-        :type  new_ft: str
+        :param to_type: New format to convert files.
+        :type  to_type: str
 
         Example:
             >>> # To use pylagrit, import the module.
@@ -870,11 +869,7 @@ class PyLaGriT(spawn):
             >>> mo.createpts_brick_xyz(
             ...     (5, 5, 5),
             ...     (0, 0, 0),
-            ...     (
-            ...         5,
-            ...         5,
-            ...         5,
-            ...     ),
+            ...     (5, 5, 5),
             ... )
             >>> mo.dump("gmv", "test.gmv")
             >>>
@@ -882,35 +877,18 @@ class PyLaGriT(spawn):
             >>> lg.convert("test.gmv", "exo")
             >>> lg.convert("test.gmv", "avs")
         """
-
         # Make sure I support the new filetype.
-        if new_ft not in ["avs", "gmv", "exo"]:
-            raise ValueError(f"Conversion to {new_ft} not supported.")
+        if to_type not in ["avs", "gmv", "exo"]:
+            raise ValueError(f"Conversion to {to_type} not supported.")
 
-        # Make sure there are file patterns of this type.
-        fnames = glob.glob(pattern)
-        if len(fnames) == 0:
-            raise OSError("No files found matching that name or pattern.")
+        filename = Path(filename)
+        # Check that I support the old filetype.
+        if filename.suffix not in [".avs", ".gmv"]:
+            raise ValueError(f"Conversion from {filename.suffix} not supported.")
 
-        for rpath in fnames:
-            # Set everything up for lagrit.
-            path = os.path.abspath(rpath)
-            fname = path[path.rfind("/") + 1 : path.rfind(".")]
-            old_ft = path[path.rfind(".") + 1 :]
-
-            # Check that I support the old filetype.
-            if old_ft not in ["avs", "gmv"]:
-                raise ValueError(f"Conversion from {old_ft} not supported.")
-
-            os.symlink(path, "old_format")
-
-            # Run the commands in lagrit.
-            self.sendcmd(f"read/{old_ft}/old_format/temp_cmo")
-            self.sendcmd(f"dump/{new_ft}/{fname}.{new_ft}/temp_cmo")
-
-            # Clean up created data.
-            self.sendcmd("cmo/release/temp_cmo")
-            os.unlink("old_format")
+        cmo: MO = self.read_mo(str(filename))  # type: ignore
+        cmo.dump(f"{filename.stem}.{to_type}")
+        cmo.delete()
 
     def merge(self, mesh_objs, elem_type="tet", name=None):
         """

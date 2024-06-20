@@ -1,4 +1,3 @@
-# TODO: This example does not works
 # To use pylagrit, import the module.
 import pylagrit
 

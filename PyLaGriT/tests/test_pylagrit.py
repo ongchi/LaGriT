@@ -42,18 +42,22 @@ class TestPyLaGriT(unittest.TestCase):
 
         lg = self.lg
 
-        old_formats = ["avs", "gmv"]
-        new_formats = ["avs", "gmv", "exo"]
+        from_formats = ["avs", "gmv"]
+        to_formats = ["avs", "gmv", "exo"]
 
-        for old_ft, new_ft in itertools.product(old_formats, new_formats):
-            # Convert all avs files to gmv with pylagrit
-            with suppress_stdout():
-                lg.convert(f"test_convert/*.{old_ft}", new_ft)
+        for old_fmt, new_fmt in itertools.product(from_formats, to_formats):
+            if old_fmt != new_fmt:
+                os.symlink(f"tests/test_convert/test.{old_fmt}", f"test.{old_fmt}")
 
-            # If the file did not get generated, assume fail.
-            if not os.path.isfile(f"test.{new_ft}"):
-                raise OSError("Failed Conversion.")
-            os.remove(f"test.{new_ft}")
+                # Convert all avs files to gmv with pylagrit
+                with suppress_stdout():
+                    lg.convert(f"test.{old_fmt}", new_fmt)
+
+                # If the file did not get generated, assume fail.
+                if not os.path.isfile(f"test.{new_fmt}"):
+                    raise OSError("Failed Conversion.")
+                os.remove(f"test.{old_fmt}")
+                os.remove(f"test.{new_fmt}")
 
     def test_merge(self):
         """
