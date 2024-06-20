@@ -1,4 +1,3 @@
-# TODO: This example does not works
 # Set up a five spot co2 injection and brine production problem
 # from fdata import*
 # from fpost import*
@@ -55,9 +54,9 @@ zmm = np.linspace(zmin, zmax, nzbase + 1)
 # dat.grid.make(dat.work_dir+os.sep+'GRID.inp',x=xmm,y=ymm,z=zmm)
 # dat.grid.write('AVS.inp', format='avs')
 lg = pylagrit.PyLaGriT(batch=batch)
-mtemp = lg.gridder(xmm, ymm, zmm, connect=True)
+mtemp = lg.gridder(xmm, ymm, zmm, elem_type="quad", connect=True)
 mtemp.dump("AVS.inp")
-m = lg.read_mo("AVS.inp")
+mo: pylagrit.MO = lg.read_mo("AVS.inp")  # type: ignore
 # z_inj = dat.grid.node_nearest_point((0,0,zmid)).position[2]
 # m_l = l.create_line(2, (0.1,0.1,zmin), (0.1,0.1,zmax))
 # m_l.connect_delaunay()
@@ -79,10 +78,11 @@ m_c = m_h.extrude(
 )
 m_h.delete()
 m_c.connect_delaunay()
-for _ in range(4):
-    m.refine_to_object(m_c, prd_choice=1)
 
-m2 = m.grid2grid_tree_to_fe()
+for _ in range(4):
+    mo.refine_to_object(m_c, prd_choice=1)
+
+m2 = mo.grid2grid_tree_to_fe()
 # m2.gmv()
 m2.connect_delaunay()
 

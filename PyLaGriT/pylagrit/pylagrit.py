@@ -1399,39 +1399,40 @@ class PyLaGriT(spawn):
             >>> mqua = lg.gridder(x, y, elem_type="quad", connect=True)
             >>> mqua.paraview()
         """
-        dim = 0
-        if x is not None:
-            if len(x) > 0:
-                dim += 1
-        if y is not None:
-            if len(y) > 0:
-                dim += 1
-        if z is not None:
-            if len(z) > 0:
-                dim += 1
-        if dim == 0:
-            print("ERROR: must define at least one of x, y, z arrays")
-            return
-        if elem_type in ["line"] and dim != 1:
-            print(
-                "Error: Only 1 coordinate array (x,y,z) required for elem_type 'line'"
-            )
-            return
-        if elem_type in ["tri", "quad"] and dim != 2:
-            print(
-                "Error: Only 2 coordinate arrays (x,y,z) required for elem_type '"
-                + str(elem_type)
-                + "'"
-            )
-            return
-        if elem_type in ["tet", "hex"] and dim != 3:
-            print(
-                "Error: 3 coordinate arrays (x,y,z) required for elem_type '"
-                + str(elem_type)
-                + "'"
-            )
-            print("Set elem_type to a 2D format like 'quad' or 'triplane'")
-            return
+        # TODO: validation for point set
+        # dim = 0
+        # if x is not None:
+        #     if len(x) > 0:
+        #         dim += 1
+        # if y is not None:
+        #     if len(y) > 0:
+        #         dim += 1
+        # if z is not None:
+        #     if len(z) > 0:
+        #         dim += 1
+        # if dim == 0:
+        #     print("ERROR: must define at least one of x, y, z arrays")
+        #     return
+        # if elem_type in ["line"] and dim != 1:
+        #     print(
+        #         "Error: Only 1 coordinate array (x,y,z) required for elem_type 'line'"
+        #     )
+        #     return
+        # if elem_type in ["tri", "quad"] and dim != 2:
+        #     print(
+        #         "Error: Only 2 coordinate arrays (x,y,z) required for elem_type '"
+        #         + str(elem_type)
+        #         + "'"
+        #     )
+        #     return
+        # if elem_type in ["tet", "hex"] and dim != 3:
+        #     print(
+        #         "Error: 3 coordinate arrays (x,y,z) required for elem_type '"
+        #         + str(elem_type)
+        #         + "'"
+        #     )
+        #     print("Set elem_type to a 2D format like 'quad' or 'triplane'")
+        #     return
         if x is None or len(x) == 0:
             x = [0]
         if y is None or len(y) == 0:
@@ -4329,10 +4330,7 @@ class MO:
             stride=stride,
             big_tet_coords=big_tet_coords,
         )
-        self.sendline("/".join(["cmo", "delete", self.name]))
         self.sendline("/".join(["cmo", "move", self.name, mo_tmp.name]))
-        mo_tmp.delete()
-        # self.connect(option1='delaunay', **minus_self(locals()))
 
     def connect_noadd(self):
         """
