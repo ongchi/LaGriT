@@ -1,4 +1,3 @@
-# TODO: This example does not works
 import optparse
 import os
 
@@ -128,7 +127,7 @@ m2: MO = lg.create()
 m2.createpts_xyz(
     (nx, ny, 1),  # type: ignore
     [xx.min(), yy.min(), 0.0],
-    [xx.max(), yy.max(), 1.0],
+    [xx.max(), yy.max(), 0.0],
     rz_switch=[1, 1, 1],
     connect=False,
 )
@@ -138,9 +137,7 @@ m2.addatt("z_save", vtype="vdouble", rank="scalar")
 m2.interpolate_voronoi("z_save", m, "z_save")
 # Find nodes associated with nodata
 pdel = m2.pset_attribute("z_save", -9999)
-# Create element set from these nodes and remove elements
-edel = pdel.eltset()
-m2.rmpoint_eltset(edel)
+m2.rmpoint_pset(pdel)
 # Copy temp z values over to actual a values
 # m2.copyatt('z_save','zic')
 # Take a look to make sure everything is ok
@@ -181,14 +178,16 @@ m3.copyatt("z_save", "zic")
 # Create top surface avs
 m3.dump("top.inp")
 ## Subtract 1 from z values of top and dump into bottom surface avs
-m3.math("sub", 1, "zic", cmosrc=m3)
+m3.math("sub", "zic", value=1, cmosrc=m3)
 m3.dump("mid.inp")
 m3.setatt("zic", 0.0)
 m3.dump("bot.inp")
 
 # Stack the layers in a new mesh object
 stack = lg.create()
-stack.stack_layers("avs", ["bot.inp 1", "mid.inp 1,3", "top.inp 1,0"], flip_opt=True)
+stack.stack_layers(
+    ["bot.inp 1", "mid.inp 1,3", "top.inp 1,0"], file_type="avs", flip_opt=True
+)
 stack_hex = stack.stack_fill()
 # Automatically create face sets based on normal vectors and layer id
 # fs = stack_hex.create_boundary_facesets(base_name='faceset_bounds',stacked_layers=True)
