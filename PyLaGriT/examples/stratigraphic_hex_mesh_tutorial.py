@@ -455,7 +455,7 @@ mo.dump("Hex_mesh.inp")
 motet = mohex.copypts()
 motet.setatt("imt", 1)
 motet.setatt("itp", 0)
-motet.connect(option1="check_interface")
+motet.connect(option="check_interface")
 motet.resetpts_itp()
 
 motet.interpolate_voronoi("imt", mohex, "imt")
