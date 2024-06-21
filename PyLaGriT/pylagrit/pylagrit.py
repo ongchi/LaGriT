@@ -6,7 +6,7 @@ from collections import OrderedDict
 from itertools import product
 from pathlib import Path
 from subprocess import call
-from typing import List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple, cast
 from xml.dom import minidom
 
 import numpy
@@ -44,18 +44,18 @@ class PyLaGriT(spawn):
 
     def __init__(
         self,
-        lagrit_exe=None,
+        lagrit_exe: Optional[str] = None,
         verbose=True,
         batch=False,
         batchfile="pylagrit.lgi",
-        gmv_exe=None,
-        paraview_exe=None,
+        gmv_exe: Optional[str] = None,
+        paraview_exe: Optional[str] = None,
         timeout=300,
         **kwargs,
     ):
         self.verbose = verbose
-        self.mo = {}
-        self.pset = {}
+        self.mo: Dict[str, MO] = {}
+        self.pset: Dict[str, PSet] = {}
         self.batch = batch
         self._check_rc()
 
@@ -101,7 +101,7 @@ class PyLaGriT(spawn):
             call(self.lagrit_exe + " < " + self.batchfile, shell=True, stdout=fout)  # noqa: S602
             fout.close()
 
-    def sendcmd(self, s, verbose=True, expectstr="Enter a command"):
+    def sendcmd(self, s: str, verbose=True, expectstr="Enter a command"):
         if self.batch:
             self.fh.write(s + "\n")
         else:
@@ -136,16 +136,20 @@ class PyLaGriT(spawn):
                 output_filter=output_filter,
             )
 
-    def cmo_status(self, cmo=None, brief=False, verbose=True):
+    def cmo_status(self, cmo: "Optional[MO | str]" = None, brief=False, verbose=True):
         cmd = "cmo/status"
         if cmo:
-            cmd += "/" + cmo
+            cmd += "/" + str(cmo)
         if brief:
             cmd += "/brief"
         self.sendcmd(cmd, verbose=verbose)
 
     def read_mo(
-        self, filename, filetype=None, name=None, binary=False
+        self,
+        filename: str,
+        filetype: Optional[str] = None,
+        name: Optional[str] = None,
+        binary=False,
     ) -> Optional["MO" | List["MO"]]:
         """
         Read in mesh
@@ -248,7 +252,9 @@ class PyLaGriT(spawn):
             self.mo[name] = MO(name, self)
             return self.mo[name]
 
-    def read_fehm(self, filename, avs_filename="temp.inp", elem_type=None):
+    def read_fehm(
+        self, filename: str, avs_filename="temp.inp", elem_type: Optional[str] = None
+    ):
         with open(filename) as fh:
             ln = fh.readline()
             nn = int(fh.readline().strip())
@@ -285,11 +291,11 @@ class PyLaGriT(spawn):
 
     def read_sheetij(
         self,
-        name,
-        filename,
-        NXY,
-        minXY,
-        DXY,
+        name: str,
+        filename: str,
+        NXY: Tuple[int, int],
+        minXY: Tuple[float, float],
+        DXY: Tuple[float, float],
         connect=True,
         file_type="ascii",
         flip="none",
@@ -342,10 +348,6 @@ class PyLaGriT(spawn):
 
         """
 
-        NXY = [str(v) for v in NXY]
-        minXY = [str(v) for v in minXY]
-        DXY = [str(v) for v in DXY]
-
         connect_str = "connect" if connect else "points"
         skip_str = "skip %d" % skip_lines
 
@@ -381,9 +383,9 @@ class PyLaGriT(spawn):
             "read",
             "sheetij",
             filename,
-            ",".join(NXY),
-            ",".join(minXY),
-            ",".join(DXY),
+            ",".join([str(v) for v in NXY]),
+            ",".join([str(v) for v in minXY]),
+            ",".join([str(v) for v in DXY]),
             skip_str,
             flip_str,
             connect_str,
@@ -397,13 +399,13 @@ class PyLaGriT(spawn):
 
     def read_modflow(
         self,
-        materials_file,
-        nrows,
-        ncols,
-        name=None,
+        materials_file: str,
+        nrows: int,
+        ncols: int,
+        name: Optional[str] = None,
         DXY=(100, 100),
         height=7.75,
-        filename=None,
+        filename: Optional[str] = None,
     ):
         """
         Reads in a Modflow elevation file (and, optionally, an HDF5/txt file containing node materials) and generates and returns hexagonal mesh.
@@ -438,7 +440,9 @@ class PyLaGriT(spawn):
 
         # Generate hexmesh
         # Alternately, just extrude elev_surface
-        hexmesh = self.gridder(x, y, z, elem_type="hex", connect=True, name=name)
+        hexmesh = self.gridder(
+            x.tolist(), y.tolist(), z.tolist(), elem_type="hex", connect=True, name=name
+        )
 
         # Capture hexmesh points as pset
         hexset = hexmesh.pset_geom(
@@ -498,7 +502,7 @@ class PyLaGriT(spawn):
 
         # Project materials onto surface
         mtrl_surface = self.read_sheetij(
-            "mo_mat", tmp_file, [ncols, nrows], [0, 0], DXY
+            "mo_mat", tmp_file, (ncols, nrows), (0, 0), DXY
         )
 
         # Create psets based on imt values, assign global imt from psets
@@ -525,7 +529,7 @@ class PyLaGriT(spawn):
         if filename is not None:
             # Load modflow elevation map into surface
             elev_surface = self.read_sheetij(
-                "motmp", filename, [ncols, nrows], [0, 0], DXY, flip="y"
+                "motmp", filename, (ncols, nrows), (0, 0), DXY, flip="y"
             )
 
             # Copy elevation to new attribute and set all surface point height to 0
@@ -557,7 +561,12 @@ class PyLaGriT(spawn):
         self.mo[name] = MO(name, self)
         return self.mo[name]
 
-    def boundary_components(self, style="node", material_id_number=None, reset=None):
+    def boundary_components(
+        self,
+        style="node",
+        material_id_number: Optional[int] = None,
+        reset: Optional[bool] = None,
+    ):
         """
         Calculates the number of connected components of a mesh for diagnostic purposes.
 
@@ -581,28 +590,17 @@ class PyLaGriT(spawn):
 
         self.sendcmd("/".join(cmd))
 
-    def addmesh(self, mo1, mo2, style="add", name=None, *args):
-        if isinstance(mo1, MO):
-            mo1name = mo1.name
-        elif isinstance(mo1, str):
-            mo1name = mo1
-        else:
-            print(
-                "ERROR: MO object or name of mesh object as a string expected for mo1"
-            )
-            return
-        if isinstance(mo2, MO):
-            mo2name = mo2.name
-        elif isinstance(mo2, str):
-            mo2name = mo2
-        else:
-            print(
-                "ERROR: MO object or name of mesh object as a string expected for mo2"
-            )
-            return
+    def addmesh(
+        self,
+        mo1: "MO | str",
+        mo2: "MO | str",
+        style="add",
+        name: Optional[str] = None,
+        *args,
+    ):
         if name is None:
             name = make_name("mo", self.mo.keys())
-        cmd = "/".join(["addmesh", style, name, mo1name, mo2name])
+        cmd = "/".join(["addmesh", style, name, str(mo1), str(mo2)])
         for a in args:
             if isinstance(a, str):
                 cmd = "/".join([cmd, a])
@@ -612,65 +610,66 @@ class PyLaGriT(spawn):
         self.mo[name] = MO(name, self)
         return self.mo[name]
 
-    def addmesh_add(self, mo1, mo2, name=None, refine_factor=None, refine_style="edge"):
-        if refine_factor is None:
-            refine_factor = " "
+    def addmesh_add(
+        self,
+        mo1: "MO | str",
+        mo2: "MO | str",
+        name: Optional[str] = None,
+        refine_factor=-1,
+        refine_style="edge",
+    ):
         return self.addmesh(mo1, mo2, "add", name, refine_factor, refine_style)
 
-    def addmesh_amr(self, mo1, mo2, name=None):
+    def addmesh_amr(self, mo1: "MO | str", mo2: "MO | str", name: Optional[str] = None):
         return self.addmesh(mo1, mo2, style="amr", name=name)
 
-    def addmesh_append(self, mo1, mo2, name=None):
+    def addmesh_append(
+        self, mo1: "MO | str", mo2: "MO | str", name: Optional[str] = None
+    ):
         return self.addmesh(mo1, mo2, style="append", name=name)
 
-    def addmesh_delete(self, mo1, mo2, name=None):
+    def addmesh_delete(
+        self, mo1: "MO | str", mo2: "MO | str", name: Optional[str] = None
+    ):
         return self.addmesh(mo1, mo2, style="delete", name=name)
 
-    def addmesh_glue(self, mo1, mo2, name=None):
+    def addmesh_glue(
+        self, mo1: "MO | str", mo2: "MO | str", name: Optional[str] = None
+    ):
         return self.addmesh(mo1, mo2, style="glue", name=name)
 
-    def addmesh_intersect(self, pset, mo1, mo2, name=None):
-        if isinstance(pset, PSet):
-            psetname = pset.name
-        elif isinstance(pset, str):
-            psetname = pset
-        else:
-            print(
-                "ERROR: PSet object or name of PSet object as a string expected for pset"
-            )
-            return
-        if isinstance(mo1, MO):
-            mo1name = mo1.name
-        elif isinstance(mo1, str):
-            mo1name = mo1
-        else:
-            print(
-                "ERROR: MO object or name of mesh object as a string expected for mo1"
-            )
-            return
-        if isinstance(mo2, MO):
-            mo2name = mo2.name
-        elif isinstance(mo2, str):
-            mo2name = mo2
-        else:
-            print(
-                "ERROR: MO object or name of mesh object as a string expected for mo2"
-            )
-            return
+    def addmesh_intersect(
+        self,
+        pset: "PSet | str",
+        mo1: "MO | str",
+        mo2: "MO | str",
+        name: Optional[str] = None,
+    ):
         if name is None:
             name = make_name("mo", self.mo.keys())
-        cmd = "/".join(["addmesh", "intersect", name, psetname, mo1name, mo2name])
+        cmd = "/".join(["addmesh", "intersect", name, str(pset), str(mo1), str(mo2)])
         self.sendcmd(cmd)
         self.pset[name] = PSet(name, self)
         return self.pset[name]
 
-    def addmesh_merge(self, mo1, mo2, name=None):
+    def addmesh_merge(
+        self, mo1: "MO | str", mo2: "MO | str", name: Optional[str] = None
+    ):
         return self.addmesh(mo1, mo2, style="merge", name=name)
 
-    def addmesh_pyramid(self, mo1, mo2, name=None):
+    def addmesh_pyramid(
+        self, mo1: "MO | str", mo2: "MO | str", name: Optional[str] = None
+    ):
         return self.addmesh(mo1, mo2, style="pyramid", name=name)
 
-    def addmesh_excavate(self, mo1, mo2, name=None, bfs=False, connect=False):
+    def addmesh_excavate(
+        self,
+        mo1: "MO | str",
+        mo2: "MO | str",
+        name: Optional[str] = None,
+        bfs=False,
+        connect=False,
+    ):
         if bfs:
             bfsstr = "bfs"
         else:
@@ -725,8 +724,8 @@ class PyLaGriT(spawn):
 
     def extract_surfmesh(
         self,
-        name=None,
-        cmo_in=None,
+        name: Optional[str] = None,
+        cmo_in: "Optional[MO | str]" = None,
         stride=(1, 0, 0),
         reorder=True,
         resetpts_itp=True,
@@ -740,32 +739,29 @@ class PyLaGriT(spawn):
         cmd = ["extract/surfmesh", ",".join(stride), name]
 
         if cmo_in is not None:
-            if not isinstance(cmo_in, MO):
-                raise ValueError(
-                    "MO object or name of mesh object as a string expected for cmo_in"
-                )
+            cmo = self.mo[str(cmo_in)]
 
             if resetpts_itp:
-                cmo_in.resetpts_itp()
+                cmo.resetpts_itp()
 
             if reorder:
-                cmo_in.sendline("createpts/median")
+                cmo.sendline("createpts/median")
                 self.sendcmd(
                     "/".join(
                         [
                             "sort",
-                            cmo_in.name,
+                            str(cmo_in),
                             "index/ascending/ikey/itetclr zmed ymed xmed",
                         ]
                     )
                 )
-                self.sendcmd("/".join(["reorder", cmo_in.name, "ikey"]))
-                self.sendcmd("/".join(["cmo/DELATT", cmo_in.name, "xmed"]))
-                self.sendcmd("/".join(["cmo/DELATT", cmo_in.name, "ymed"]))
-                self.sendcmd("/".join(["cmo/DELATT", cmo_in.name, "zmed"]))
-                self.sendcmd("/".join(["cmo/DELATT", cmo_in.name, "ikey"]))
+                self.sendcmd("/".join(["reorder", str(cmo_in), "ikey"]))
+                self.sendcmd("/".join(["cmo/DELATT", str(cmo_in), "xmed"]))
+                self.sendcmd("/".join(["cmo/DELATT", str(cmo_in), "ymed"]))
+                self.sendcmd("/".join(["cmo/DELATT", str(cmo_in), "zmed"]))
+                self.sendcmd("/".join(["cmo/DELATT", str(cmo_in), "ikey"]))
 
-            cmd.append(cmo_in.name)
+            cmd.append(str(cmo_in))
 
         if external:
             cmd.append("external")
@@ -778,7 +774,7 @@ class PyLaGriT(spawn):
 
         return self.mo[name]
 
-    def read_script(self, fname):
+    def read_script(self, fname: str):
         """
         Read a LaGriT Script
 
@@ -796,16 +792,19 @@ class PyLaGriT(spawn):
             if len(c) != 0 and "finish" not in c:
                 self.sendcmd(c)
 
-    def read_att(self, fname, attributes, mesh=None, operation="add"):
+    def read_att(
+        self,
+        fname: str,
+        attributes: List[str],
+        mesh: Optional["MO"] = None,
+        operation="add",
+    ):
         """
         Reads data from a file into an attribute.
         """
 
         if mesh is None:
             mesh = self.create()
-
-        if not isinstance(attributes, (list, tuple)):
-            attributes = [attributes]
 
         if isinstance(operation, (list, tuple)):
             operation = ",".join(list(map(str, operation)))
@@ -839,7 +838,7 @@ class PyLaGriT(spawn):
         for key, value in kwargs.items():
             self.sendcmd(f"define / {key} / {value}")
 
-    def convert(self, filename, to_type: str):
+    def convert(self, filename: str, to_type: str):
         """
         Convert File
 
@@ -881,16 +880,16 @@ class PyLaGriT(spawn):
         if to_type not in ["avs", "gmv", "exo"]:
             raise ValueError(f"Conversion to {to_type} not supported.")
 
-        filename = Path(filename)
+        fname = Path(filename)
         # Check that I support the old filetype.
-        if filename.suffix not in [".avs", ".gmv"]:
-            raise ValueError(f"Conversion from {filename.suffix} not supported.")
+        if fname.suffix not in [".avs", ".gmv"]:
+            raise ValueError(f"Conversion from {fname.suffix} not supported.")
 
         cmo: MO = self.read_mo(str(filename))  # type: ignore
-        cmo.dump(f"{filename.stem}.{to_type}")
+        cmo.dump(f"{fname.stem}.{to_type}")
         cmo.delete()
 
-    def merge(self, mesh_objs, elem_type="tet", name=None):
+    def merge(self, mesh_objs: List["MO"], name: Optional[str] = None):
         """
         Merge Mesh Objects
 
@@ -928,13 +927,9 @@ class PyLaGriT(spawn):
             name = make_name("mo", self.mo.keys())
         self.mo[name] = MO(name, self)
         if len(mesh_objs) > 1:
-            # mo_merge = self.create(elem_type=elem_type)
             for mo in mesh_objs:
                 cmd = "/".join(["addmesh", "merge", name, name, mo.name])
                 self.sendcmd(cmd)
-                # mo_merge = self.addmesh_merge(mo_merge,mo)
-            # return mo_merge
-            # return reduce(self.addmesh_merge, mesh_objs)
         else:
             raise ValueError("Must provide at least two objects to merge.")
         return self.mo[name]
@@ -970,46 +965,53 @@ class PyLaGriT(spawn):
         self.mo[name] = MO(name, self)
         return self.mo[name]
 
-    def create_tet(self, name=None, npoints=0, nelements=0):
+    def create_tet(self, name: Optional[str] = None, npoints=0, nelements=0):
         """Create a tetrahedron mesh object."""
         return self.create(elem_type="tet", **minus_self(locals()))
 
-    def create_hex(self, name=None, npoints=0, nelements=0):
+    def create_hex(self, name: Optional[str] = None, npoints=0, nelements=0):
         """Create a hexagon mesh object."""
         return self.create(elem_type="hex", **minus_self(locals()))
 
-    def create_pri(self, name=None, npoints=0, nelements=0):
+    def create_pri(self, name: Optional[str] = None, npoints=0, nelements=0):
         """Create a prism mesh object."""
         return self.create(elem_type="pri", **minus_self(locals()))
 
-    def create_pyr(self, name=None, npoints=0, nelements=0):
+    def create_pyr(self, name: Optional[str] = None, npoints=0, nelements=0):
         """Create a pyramid mesh object."""
         return self.create(elem_type="pyr", **minus_self(locals()))
 
-    def create_tri(self, name=None, npoints=0, nelements=0):
+    def create_tri(self, name: Optional[str] = None, npoints=0, nelements=0):
         """Create a triangle mesh object."""
         return self.create(elem_type="tri", **minus_self(locals()))
 
-    def create_qua(self, name=None, npoints=0, nelements=0):
+    def create_qua(self, name: Optional[str] = None, npoints=0, nelements=0):
         """Create a quadrilateral mesh object."""
         return self.create(elem_type="qua", **minus_self(locals()))
 
-    def create_hyb(self, name=None, npoints=0, nelements=0):
+    def create_hyb(self, name: Optional[str] = None, npoints=0, nelements=0):
         """Create a hybrid mesh object."""
         return self.create(elem_type="hyb", **minus_self(locals()))
 
-    def create_line(self, npoints=0, mins=[], maxs=[], rz_switch=(1, 1, 1), name=None):  # noqa: B006
+    def create_line(
+        self,
+        npoints=0,
+        mins: Optional[Tuple[float, float, float]] = None,
+        maxs: Optional[Tuple[float, float, float]] = None,
+        rz_switch=(1, 1, 1),
+        name: Optional[str] = None,
+    ):
         """Create a line mesh object."""
         mo_new = self.create(elem_type="lin", name=name, npoints=npoints)
-        if len(mins) == 3 and len(maxs) == 3:
+        if mins is not None and maxs is not None:
             mo_new.createpts_line(npoints, mins, maxs, rz_switch)
         return mo_new
 
-    def create_triplane(self, name=None, npoints=0, nelements=0):
+    def create_triplane(self, name: Optional[str] = None, npoints=0, nelements=0):
         """Create a triplane mesh object."""
         return self.create(elem_type="triplane", **minus_self(locals()))
 
-    def copy(self, mo, name: Optional[str] = None):
+    def copy(self, mo: "MO | str", name: Optional[str] = None):
         """
         Copy Mesh Object
 
@@ -1026,7 +1028,7 @@ class PyLaGriT(spawn):
 
         return self.mo[name]
 
-    def dump(self, filename, mos=[], filetype="binary"):  # noqa: B006
+    def dump(self, filename: str, mos: List["MO"] = [], filetype="binary"):  # noqa: B006
         """
         Dump lagrit binary file
         :arg filename: name of lagrit binary file to create
@@ -1046,7 +1048,10 @@ class PyLaGriT(spawn):
         self.sendcmd("/".join(cmd))
 
     def tri_mo_from_polyline(
-        self, coords, order="clockwise", filename="polyline.inp", name=None
+        self,
+        coords: List[Tuple[float, float]],
+        filename="polyline.inp",
+        name: Optional[str] = None,
     ):
         """
         Create polygon tri mesh object from points
@@ -1069,20 +1074,19 @@ class PyLaGriT(spawn):
             ...     [[0.0, 0.0], [0.0, 1.0], [1.0, 1.0], [1.0, 0.0]]
             ... )
         """
-        coords = numpy.array(coords)
-        mstr = str(coords.shape[0]) + " " + str(coords.shape[0]) + " 0 0 0\n"
+        mstr = str(len(coords)) + " " + str(len(coords)) + " 0 0 0\n"
         for i, p in enumerate(coords):
             mstr += " ".join([str(i + 1), str(p[0]), str(p[1]), str(0.0)])
             mstr += "\n"
-        es1 = numpy.arange(coords.shape[0]) + 1
-        es2 = numpy.roll(es1, coords.shape[0] - 1)
+        es1 = numpy.arange(len(coords)) + 1
+        es2 = numpy.roll(es1, len(coords) - 1)
         for e1, e2 in zip(es1, es2):
             mstr += " ".join([str(e1), "1 line ", str(e1), str(e2)])
             mstr += "\n"
         with open(filename, "w") as fh:
             fh.write(mstr)
         # Check if name was specified, if not just generate one.
-        if type(name) is type(None):
+        if name is None:
             name = make_name("mo", self.mo.keys())
         motmp = cast(MO, self.read_mo(filename))
         motri = motmp.copypts(elem_type="tri")
@@ -1092,16 +1096,16 @@ class PyLaGriT(spawn):
 
     def createpts(
         self,
-        crd,
-        npts,
-        mins,
-        maxs,
-        elem_type,
+        crd: str,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        elem_type: str,
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
         connect=False,
-        name=None,
+        name: Optional[str] = None,
     ):
         """
         Create and Connect Points
@@ -1154,15 +1158,15 @@ class PyLaGriT(spawn):
 
     def createpts_xyz(
         self,
-        npts,
-        mins,
-        maxs,
-        elem_type,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        elem_type: str,
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
         connect=True,
-        name=None,
+        name: Optional[str] = None,
     ):
         return self.createpts(
             "xyz",
@@ -1179,16 +1183,16 @@ class PyLaGriT(spawn):
 
     def createpts_dxyz(
         self,
-        dxyz,
-        mins,
-        maxs,
-        elem_type,
+        dxyz: Tuple[float, float, float],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        elem_type: str,
         clip="under",
         hard_bound: str | Tuple[str, str, str] = "min",
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
         connect=True,
-        name=None,
+        name: Optional[str] = None,
     ):
         """
         Create and Connect Points to create an orthogonal hexahedral mesh. The
@@ -1287,10 +1291,10 @@ class PyLaGriT(spawn):
 
     def createpts_rtz(
         self,
-        npts,
-        mins,
-        maxs,
-        elem_type,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        elem_type: str,
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
@@ -1310,10 +1314,10 @@ class PyLaGriT(spawn):
 
     def createpts_rtp(
         self,
-        npts,
-        mins,
-        maxs,
-        elem_type,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        elem_type: str,
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
@@ -1333,13 +1337,13 @@ class PyLaGriT(spawn):
 
     def createpts_line(
         self,
-        npts,
-        mins,
-        maxs,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         elem_type="line",
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
-        name=None,
+        name: Optional[str] = None,
     ):
         """
         Create and Connect Points in a line
@@ -1362,12 +1366,12 @@ class PyLaGriT(spawn):
 
     def gridder(
         self,
-        x=None,
-        y=None,
-        z=None,
+        x: Optional[List[float]] = None,
+        y: Optional[List[float]] = None,
+        z: Optional[List[float]] = None,
         connect=False,
         elem_type="tet",
-        name=None,
+        name: Optional[str] = None,
         filename="gridder.inp",
     ):
         """
@@ -1479,7 +1483,13 @@ class PyLaGriT(spawn):
         self.sendcmd(f"cmo/printatt/{m.name}/-xyz- minmax")
         return m
 
-    def points(self, coords, connect=False, elem_type="tet", filename="points.inp"):
+    def points(
+        self,
+        coords: List[Tuple[float, float, float]],
+        connect=False,
+        elem_type="tet",
+        filename="points.inp",
+    ):
         """
         Generate a mesh object of points defined by x, y, z vectors.
 
@@ -1509,7 +1519,6 @@ class PyLaGriT(spawn):
             >>> m = lg.points(coords, elem_type="tet", connect=True)
             >>> m.paraview()
         """
-        coords = numpy.array(coords)
         # TODO: validation for point set
         # dim = 0
         # ix = numpy.all(numpy.diff(coords[:, 0]) == 0)
