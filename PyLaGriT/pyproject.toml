@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylagrit"
+version = "1.0.1"
+description = "Python interface for LaGriT"
+authors = [{ name = "Dylan R. Harp", email = "dharp@lanl.gov" }]
+dependencies = ["numpy", "pexpect>=4.6.0"]
+license = { text = "LGPL" }
+requires-python = ">=3.10"
+
+[project.urls]
+Homepage = "https://lagrit.lanl.gov"
+
+[tool.setuptools]
+packages = ["pylagrit"]
