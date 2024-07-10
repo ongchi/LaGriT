@@ -5745,9 +5745,9 @@ class PSet:
 class EltSet:
     """EltSet class"""
 
-    def __init__(self, name, parent):
+    def __init__(self, name: str, parent: MO):
         self.name = name
-        self.faceset = None
+        self.faceset: Optional[FaceSet] = None
         self._parent = parent
 
     def __repr__(self):
@@ -5758,7 +5758,7 @@ class EltSet:
         self._parent.sendcmd(cmd)
         del self._parent.eltset[self.name]
 
-    def create_faceset(self, filename=None):
+    def create_faceset(self, filename: Optional[str] = None):
         if filename is None:
             filename = "faceset_" + self.name + ".avs"
         motmpnm = make_name("mo_tmp", self._parent._parent.mo.keys())
@@ -5779,15 +5779,13 @@ class EltSet:
         self.faceset = FaceSet(filename, self)
         return self.faceset
 
-    def minmax(self, attname=None, stride=(1, 0, 0)):
+    def minmax(self, attname: Optional[str] = None, stride=(1, 0, 0)):
         self._parent.printatt(
-            attname=attname, stride=stride, eltset=self.name, ptype="minmax"
+            attname=attname, stride=stride, eltset=self, ptype="minmax"
         )
 
-    def list(self, attname=None, stride=(1, 0, 0)):
-        self._parent.printatt(
-            attname=attname, stride=stride, eltset=self.name, ptype="list"
-        )
+    def list(self, attname: Optional[str] = None, stride=(1, 0, 0)):
+        self._parent.printatt(attname=attname, stride=stride, eltset=self, ptype="list")
 
     def refine(self, amr=""):
         """
@@ -5845,7 +5843,7 @@ class EltSet:
         )
         self._parent.sendcmd(cmd)
 
-    def pset(self, name=None):
+    def pset(self, name: Optional[str] = None):
         """
         Create a pset from the points in an element set
         :arg name: Name of point set to be used within LaGriT
@@ -5859,7 +5857,7 @@ class EltSet:
         self._parent.pset[name] = PSet(name, self._parent)
         return self._parent.pset[name]
 
-    def setatt(self, attname, value):
+    def setatt(self, attname: str, value: int | float | str):
         cmd = "/".join(
             [
                 "cmo/setatt",
