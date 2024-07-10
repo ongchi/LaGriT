@@ -5905,7 +5905,7 @@ class MRegion:
 class FaceSet:
     """FaceSet class"""
 
-    def __init__(self, filename, parent):
+    def __init__(self, filename: str, parent: EltSet):
         self.filename = filename
         self._parent = parent
 
