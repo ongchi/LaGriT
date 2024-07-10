@@ -104,7 +104,7 @@ fs = stack_hex.create_boundary_facesets(
 )
 
 # Should add this to PyLaGriT, but I'm feeling lazy ;-)
-stack_hex.sendline("quality volume itetclr")
+stack_hex.sendcmd("quality volume itetclr")
 
 # Write exo file with boundary facesets
 stack_hex.dump_exo("arctic_siteb_2d.exo", facesets=fs.values())

@@ -148,7 +148,7 @@ m3 = m2.copypts(elem_type="triplane")
 m3.connect()
 # To lazy to add to pylagrit now, and don't know how to make it intuitive
 # Creates edge_max element attribute containing max edge length
-m3.sendline("quality/edge_max/y")
+m3.sendcmd("quality/edge_max/y")
 # Query created attribute
 # m3.printatt('edgemax')
 m3.minmax("edgemax")

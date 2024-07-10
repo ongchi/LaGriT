@@ -745,7 +745,7 @@ class PyLaGriT(spawn):
                 cmo.resetpts_itp()
 
             if reorder:
-                cmo.sendline("createpts/median")
+                cmo.sendcmd("createpts/median")
                 self.sendcmd(
                     "/".join(
                         [
@@ -1023,7 +1023,7 @@ class PyLaGriT(spawn):
             name = make_name("mo", self.mo.keys())
 
         # Create the MO in lagrit and the PyLaGriT object.
-        self.sendline(f"cmo/copy/{name}/{str(mo)}")
+        self.sendcmd(f"cmo/copy/{name}/{str(mo)}")
         self.mo[name] = MO(name, self)
 
         return self.mo[name]
@@ -1476,7 +1476,7 @@ class PyLaGriT(spawn):
                 "1 0 0",
                 "connect",
             ]
-            m.sendline("/".join(cmd))
+            m.sendcmd("/".join(cmd))
         elif connect:
             m.connect()
 
@@ -1568,7 +1568,7 @@ class PyLaGriT(spawn):
                 "1 0 0",
                 "connect",
             ]
-            m.sendline("/".join(cmd))
+            m.sendcmd("/".join(cmd))
         elif connect:
             m.connect()
         return m
@@ -1589,7 +1589,7 @@ class MO:
     def __repr__(self):
         return self.name
 
-    def sendline(self, cmd: str, verbose=True, expectstr="Enter a command"):
+    def sendcmd(self, cmd: str, verbose=True, expectstr="Enter a command"):
         self._parent.sendcmd(
             "cmo select " + self.name, verbose=verbose, expectstr=expectstr
         )
@@ -1696,7 +1696,7 @@ class MO:
         self._parent.cmo_status(self.name, brief=brief, verbose=verbose)
 
     def select(self):
-        self.sendline("cmo/select/" + self.name)
+        self.sendcmd("cmo/select/" + self.name)
 
     def read(self, filename: str, filetype: Optional[str] = None):
         # If filetype is lagrit, name is irrelevant
@@ -1709,7 +1709,7 @@ class MO:
         else:
             print("Error: Can't read in lagrit type file into existing mesh object")
             return
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def printatt(
         self,
@@ -1749,7 +1749,7 @@ class MO:
                 ["cmo/printatt", self.name, attname, ptype, ",".join(stride)]
             )
 
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def delatt(self, attnames: List[str], force=True):
         """
@@ -1769,7 +1769,7 @@ class MO:
                 cmd = "/".join(["cmo/DELATT", self.name, att])
             else:
                 cmd = "/".join(["cmo/delatt", self.name, att])
-            self.sendline(cmd)
+            self.sendcmd(cmd)
 
     def copyatt(
         self,
@@ -1795,7 +1795,7 @@ class MO:
         cmd = "/".join(
             ["cmo/copyatt", self.name, mo_src.name, attname_sink, attname_src]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def add_element_attribute(
         self,
@@ -1905,7 +1905,7 @@ class MO:
                     str(value),
                 ]
             )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def addatt_voronoi_volume(self, name="voronoi_volume"):
         """
@@ -1930,7 +1930,7 @@ class MO:
 
     def minmax_xyz(self, stride=(1, 0, 0), verbose=True):
         cmd = "/".join(["cmo/printatt", self.name, "-xyz-", "minmax"])
-        self.sendline(cmd, verbose=verbose)
+        self.sendcmd(cmd, verbose=verbose)
 
     def list(
         self,
@@ -1943,7 +1943,7 @@ class MO:
     def setatt(self, attname: str, value: int | float, stride=(1, 0, 0)):
         stride = [str(v) for v in stride]
         cmd = "/".join(["cmo/setatt", self.name, attname, ",".join(stride), str(value)])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def set_id(self, option: str, node_attname="id_node", elem_attname="id_elem"):
         """
@@ -1992,7 +1992,7 @@ class MO:
         else:
             print("ERROR: 'option' must be 'both' or 'node' or 'element'")
             return
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def information(self):
         """
@@ -2022,7 +2022,7 @@ class MO:
         _temp = self._parent.verbose
         self._parent.verbose = True
         with capture() as out:
-            self.sendline("cmo/status/" + self.name, verbose=True)
+            self.sendcmd("cmo/status/" + self.name, verbose=True)
         self._parent.verbose = _temp
 
         atts = {}
@@ -2126,7 +2126,7 @@ class MO:
                 ",".join([str(v) for v in ctr]),
             ]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.pset[name] = PSet(name, self)
 
         return self.pset[name]
@@ -2284,7 +2284,7 @@ class MO:
                 comparison,
             ]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.pset[name] = PSet(name, self)
 
         return self.pset[name]
@@ -2326,7 +2326,7 @@ class MO:
             print("ERROR: 'option' must be 'distance_field' or 'signed_distance_field'")
             return
 
-        self.sendline("/".join(["compute", option, self.name, mo.name, attname]))
+        self.sendcmd("/".join(["compute", option, self.name, mo.name, attname]))
 
     def compute_extrapolate(self, surf_mo: "MO", dir="zpos", attname="zic"):
         """
@@ -2374,7 +2374,7 @@ class MO:
         hex.dump('extrapolated.gmv')
         """
 
-        self.sendline(
+        self.sendcmd(
             "/".join(
                 ["compute", "linear_transform", self.name, surf_mo.name, dir, attname]
             )
@@ -2403,7 +2403,7 @@ class MO:
         stride = [str(v) for v in stride]
 
         cmd = "/".join(["pset", name, "region", region.name, ",".join(stride)])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.pset[name] = PSet(name, self)
 
         return self.pset[name]
@@ -2431,7 +2431,7 @@ class MO:
         stride = [str(v) for v in stride]
 
         cmd = "/".join(["pset", name, "surface", surface.name, ",".join(stride)])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.pset[name] = PSet(name, self)
 
         return self.pset[name]
@@ -2469,7 +2469,7 @@ class MO:
         # Create the new PSET in lagrit and the pylagrit object.
         cmd = ["pset", name, boolean]
         cmd.append(",".join([p.name for p in pset_list]))
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
         self.pset[name] = PSet(name, self)
         return self.pset[name]
 
@@ -2487,7 +2487,7 @@ class MO:
         set node type from connectivity of mesh
 
         """
-        self.sendline("resetpts/itp")
+        self.sendcmd("resetpts/itp")
 
     def eltset_object(
         self, mo: "MO", name: Optional[str] = None, attr_name: Optional[str] = None
@@ -2519,7 +2519,7 @@ class MO:
         if name is None:
             name = make_name("e", self.eltset.keys())
         cmd = ["eltset", name, boolstr, " ".join([e.name for e in eset_list])]
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
         self.eltset[name] = EltSet(name, self)
         return self.eltset[name]
 
@@ -2536,7 +2536,7 @@ class MO:
         if name is None:
             name = make_name("e", self.eltset.keys())
         cmd = "/".join(["eltset", name, "region", region.name])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.eltset[name] = EltSet(name, self)
         return self.eltset[name]
 
@@ -2550,7 +2550,7 @@ class MO:
         if name is None:
             name = make_name("e", self.eltset.keys())
         cmd = "/".join(["eltset", name, attribute_name, boolstr, str(attribute_value)])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.eltset[name] = EltSet(name, self)
         return self.eltset[name]
 
@@ -2605,13 +2605,13 @@ class MO:
         self, pset: "PSet", itype="exclusive", compress=True, resetpts_itp=True
     ):
         cmd = "rmpoint/pset,get," + pset.name + "/" + itype
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         if compress:
             self.rmpoint_compress(resetpts_itp=resetpts_itp)
 
     def rmpoint_eltset(self, eltset: "EltSet", compress=True, resetpts_itp=True):
         cmd = "rmpoint/element/eltset,get," + eltset.name
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         if compress:
             self.rmpoint_compress(resetpts_itp=resetpts_itp)
 
@@ -2625,16 +2625,16 @@ class MO:
         """
 
         if filter_bool:
-            self.sendline("filter/1,0,0")
-        self.sendline("rmpoint/compress")
+            self.sendcmd("filter/1,0,0")
+        self.sendcmd("rmpoint/compress")
         if resetpts_itp:
             self.resetpts_itp()
 
     def reorder_nodes(self, order="ascending", cycle="zic yic xic"):
-        self.sendline("resetpts itp")
-        self.sendline("/".join(["sort", self.name, "index", order, "ikey", cycle]))
-        self.sendline("reorder / " + self.name + " / ikey")
-        self.sendline("cmo / DELATT / " + self.name + " / ikey")
+        self.sendcmd("resetpts itp")
+        self.sendcmd("/".join(["sort", self.name, "index", order, "ikey", cycle]))
+        self.sendcmd("reorder / " + self.name + " / ikey")
+        self.sendcmd("cmo / DELATT / " + self.name + " / ikey")
 
     def trans(
         self,
@@ -2659,7 +2659,7 @@ class MO:
                 ",".join([str(v) for v in xnew]),
             ]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def rotateln(
         self,
@@ -2736,7 +2736,7 @@ class MO:
             >>> stack_hex.dump_ats_xml("rotated.xml", "rotated.exo")
             >>> stack_hex.paraview()
         """
-        self.sendline(
+        self.sendcmd(
             "/".join(
                 [
                     "rotateln",
@@ -2842,7 +2842,7 @@ class MO:
             ],
         )
         [cmd.append(c[0]) for c in _iter if c[1]]
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def massage2(
         self,
@@ -2912,7 +2912,7 @@ class MO:
             ],
         )
         [cmd.append(c[0]) for c in _iter if c[1]]
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def perturb(self, xfactor: float, yfactor: float, zfactor: float, stride=(1, 0, 0)):
         """
@@ -2932,7 +2932,7 @@ class MO:
             str(yfactor),
             str(zfactor),
         ]
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def upscale(
         self,
@@ -2986,7 +2986,7 @@ class MO:
             opts.append("set_id")
         if len(opts) > 0:
             cmd.append(" ".join(opts))
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def upscale_ariave(
         self,
@@ -3161,7 +3161,7 @@ class MO:
             filename = self.name + ".gmv"
         if exe is not None:
             self._parent.gmv_exe = exe
-        self.sendline("dump/gmv/" + filename + "/" + self.name)
+        self.sendcmd("dump/gmv/" + filename + "/" + self.name)
         os.system(self._parent.gmv_exe + " -i " + filename)  # noqa: S605
 
     def paraview(self, exe: Optional[str] = None, filename: Optional[str] = None):
@@ -3169,7 +3169,7 @@ class MO:
             filename = self.name + ".inp"
         if exe is not None:
             self._parent.paraview_exe = exe
-        self.sendline("dump/avs/" + filename + "/" + self.name)
+        self.sendcmd("dump/avs/" + filename + "/" + self.name)
         os.system(self._parent.paraview_exe + " " + filename)  # noqa: S605
 
     def dump(self, filename: Optional[str] = None, format: Optional[str] = None, *args):
@@ -3208,7 +3208,7 @@ class MO:
         for arg in args:
             cmd = "/".join([cmd, str(arg)])
 
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def dump_avs2(
         self,
@@ -3289,7 +3289,7 @@ class MO:
             cmd = "/".join([cmd, "facesets"])
             for fc in facesets:
                 cmd += " &\n" + fc.filename
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def dump_gmv(self, filename: str, format="binary"):
         self.dump(filename, "gmv", format)
@@ -3302,7 +3302,7 @@ class MO:
 
     def dump_zone_imt(self, filename: str, imt_value: int):
         cmd = ["dump", "zone_imt", filename, self.name, str(imt_value)]
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def dump_pflotran(self, filename_root: str, nofilter_zero=False):
         """
@@ -3331,7 +3331,7 @@ class MO:
         cmd = ["dump", "pflotran", filename_root, self.name]
         if nofilter_zero:
             cmd.append("nofilter_zero")
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def dump_zone_outside(
         self, filename: str, keepatt=False, keepatt_median=False, keepatt_voronoi=False
@@ -3346,7 +3346,7 @@ class MO:
             cmd.append("keepatt_median")
         elif keepatt_voronoi:
             cmd.append("keepatt_voronoi")
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def dump_ats_xml(
         self,
@@ -3564,14 +3564,14 @@ class MO:
         """
         if len(pset) == 0:
             cmd = ["pset", "-all-", zonetype, filerootname, "ascii"]
-            self.sendline("/".join(cmd))
+            self.sendcmd("/".join(cmd))
         else:
             for p in pset:
                 cmd = ["pset", p.name, zonetype, filerootname + "_" + p.name, "ascii"]
-                self.sendline("/".join(cmd))
+                self.sendcmd("/".join(cmd))
 
     def delete(self):
-        self.sendline("cmo/delete/" + self.name)
+        self.sendcmd("cmo/delete/" + self.name)
         del self._parent.mo[self.name]
 
     def create_boundary_facesets(
@@ -3664,7 +3664,7 @@ class MO:
                 ",".join([str(v) for v in rz_value]),
             ]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
         if connect:
             if self.elem_type.startswith(("tri", "tet")):
@@ -3680,7 +3680,7 @@ class MO:
                         "connect",
                     ]
                 )
-            self.sendline(cmd)
+            self.sendcmd(cmd)
 
     def createpts_xyz(
         self,
@@ -3838,7 +3838,7 @@ class MO:
                 ",".join([str(v) for v in rz_switch]),
             ]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def createpts_brick(
         self,
@@ -3894,7 +3894,7 @@ class MO:
             "createpts/brick/%s/%s,%s,%s/%s,%s,%s/%s,%s,%s/%s,%s,%s/"
             + "%s,%s,%s/%s,%s,%s"
         )
-        self.sendline(cmd % t)
+        self.sendcmd(cmd % t)
 
     def createpts_brick_xyz(
         self,
@@ -3933,7 +3933,7 @@ class MO:
         self.createpts_brick("rtp", **minus_self(locals()))
 
     def createpts_median(self):
-        self.sendline("createpts/median")
+        self.sendcmd("createpts/median")
 
     def subset(
         self,
@@ -4062,7 +4062,7 @@ class MO:
         for v in pts:
             assert len(v) == 3, "vectors must be of length 3 (x,y,z)"  # noqa: S101
             c += "/&\n" + ",".join(list(map(str, v)))
-        self.sendline("quadxy/%d,%d%s" % (quadpts[0], quadpts[1], c))
+        self.sendcmd("quadxy/%d,%d%s" % (quadpts[0], quadpts[1], c))
 
         if connect:
             cmd = "/".join(
@@ -4075,7 +4075,7 @@ class MO:
                     "connect",
                 ]
             )
-            self.sendline(cmd)
+            self.sendcmd(cmd)
 
     def quadxyz(
         self,
@@ -4138,7 +4138,7 @@ class MO:
         for v in pts:
             assert len(v) == 3, "each entry in pts must contain 3 (x,y,z) values"  # noqa: S101
             cmd += "/ &\n" + ",".join(list(map(str, v)))
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
         if connect:
             cmd = "/".join(
@@ -4151,7 +4151,7 @@ class MO:
                     "connect",
                 ]
             )
-            self.sendline(cmd)
+            self.sendcmd(cmd)
 
     def rzbrick(
         self,
@@ -4190,7 +4190,7 @@ class MO:
         if connect:
             cmd += "/connect"
 
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def subset_rtz(
         self, mins: Tuple[float, float, float], maxs: Tuple[float, float, float]
@@ -4254,7 +4254,7 @@ class MO:
         if name is None:
             name = make_name("mo", self._parent.mo.keys())
         cmd = "/".join(["grid2grid", ioption, name, self.name])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self._parent.mo[name] = MO(name, self._parent)
         return self._parent.mo[name]
 
@@ -4386,7 +4386,7 @@ class MO:
         if option is not None:
             cmd += [option]
         cmd = "/".join(cmd)
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def connect_delaunay(
         self,
@@ -4407,7 +4407,7 @@ class MO:
             stride=stride,
             big_tet_coords=big_tet_coords,
         )
-        self.sendline("/".join(["cmo", "move", self.name, mo_tmp.name]))
+        self.sendcmd("/".join(["cmo", "move", self.name, mo_tmp.name]))
 
     def connect_noadd(self):
         """
@@ -4436,7 +4436,7 @@ class MO:
         if name is None:
             name = make_name("mo", self._parent.mo.keys())
         mo_new = self._parent.create(elem_type=elem_type, name=name)
-        self.sendline("/".join(["copypts", mo_new.name, self.name]))
+        self.sendcmd("/".join(["copypts", mo_new.name, self.name]))
         return mo_new
 
     def extrude(
@@ -4476,7 +4476,7 @@ class MO:
         cmd = ["extrude", name, self.name, offset_type, str(offset), return_type]
         if direction is not None:
             cmd.append(",".join(map(str, direction)))
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
         self._parent.mo[name] = MO(name, self._parent)
         return self._parent.mo[name]
 
@@ -4543,7 +4543,7 @@ class MO:
         :returns: attr_name
         """
         attr_name = attr_name if attr_name else "attr00"
-        self.sendline("/".join(["intersect_elements", self.name, mo.name, attr_name]))
+        self.sendcmd("/".join(["intersect_elements", self.name, mo.name, attr_name]))
         return attr_name
 
     def extract_surfmesh(
@@ -4596,7 +4596,7 @@ class MO:
             cmd += [keep_option]
         if interp_function is not None:
             cmd.append(interp_function)
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def interpolate_voronoi(
         self,
@@ -4643,7 +4643,7 @@ class MO:
         if interp_function is not None:
             cmd.append(interp_function)
         print("/".join(cmd))
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def interpolate_default(
         self,
@@ -4664,7 +4664,7 @@ class MO:
         """
         if name is None:
             name = make_name("mo", self._parent.mo.keys())
-        self.sendline("/".join(["cmo/copy", name, self.name]))
+        self.sendcmd("/".join(["cmo/copy", name, self.name]))
         self._parent.mo[name] = MO(name, self._parent)
         return self._parent.mo[name]
 
@@ -4696,7 +4696,7 @@ class MO:
             cmd.append(",".join([str(v) for v in xy_subset]))
 
         cmd.append(" &")
-        self.sendline("/".join(cmd), expectstr="\r\n")
+        self.sendcmd("/".join(cmd), expectstr="\r\n")
 
         self._parent.sendcmd(
             " ".join([filelist[0], mat_num[0], "/ &"]), expectstr="\r\n"
@@ -4726,7 +4726,7 @@ class MO:
     def stack_fill(self, name: Optional[str] = None):
         if name is None:
             name = make_name("mo", self._parent.mo.keys())
-        self.sendline("/".join(["stack/fill", name, self.name]))
+        self.sendcmd("/".join(["stack/fill", name, self.name]))
         self._parent.mo[name] = MO(name, self._parent)
         return self._parent.mo[name]
 
@@ -4754,13 +4754,13 @@ class MO:
         ]
         if value is not None:
             cmd += [str(value)]
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def settets(self, method: Optional[str] = None):
         if method is None:
-            self.sendline("settets")
+            self.sendcmd("settets")
         else:
-            self.sendline("settets/" + method)
+            self.sendcmd("settets/" + method)
 
     def settets_parents(self):
         self.settets("parents")
@@ -4830,7 +4830,7 @@ class MO:
                 >>> motri.paraview()
 
         """
-        self.sendline("triangulate/" + order)
+        self.sendcmd("triangulate/" + order)
 
     def refine(
         self,
@@ -4913,7 +4913,7 @@ class MO:
         cmd = "/".join(["regnpts", name, ptdist, stride, geom, pts])
         cmd += end
         print(cmd)
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def regnpts_xyz(
         self,
@@ -5077,22 +5077,22 @@ class MO:
             cmd += "/no_interface"
         elif closed_surfaces:
             cmd += "/closed_surfaces/reflect"
-        self.sendline(cmd)
+        self.sendcmd(cmd)
 
     def smooth(self, *args, **kwargs):
         if "algorithm" not in kwargs:
-            self.sendline("smooth")
+            self.sendcmd("smooth")
         else:
             cmd = ["smooth", "position", kwargs["algorithm"]]
             for a in args:
                 cmd.append(a)
-            self.sendline("/".join(cmd))
+            self.sendcmd("/".join(cmd))
 
     def recon(self, option="", damage="", checkaxy=False):
         cmd = ["recon", str(option), str(damage)]
         if checkaxy:
             cmd.append("checkaxy")
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def filter(
         self,
@@ -5113,7 +5113,7 @@ class MO:
         ):
             print("Error: Both boolean and attribute must be specified together")
             return
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def tri_mesh_output_prep(self):
         """
@@ -5134,7 +5134,7 @@ class MO:
         if name is None:
             name = make_name("s", self.surfaces.keys())
         cmd = "/".join(["surface", name, ibtype, "sheet", self.name])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.surfaces[name] = Surface(name, self)
         return self.surfaces[name]
 
@@ -5157,7 +5157,7 @@ class MO:
                 ",".join([str(v) for v in maxs]),
             ]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.surfaces[name] = Surface(name, self)
         return self.surfaces[name]
 
@@ -5182,7 +5182,7 @@ class MO:
                 str(radius),
             ]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.surfaces[name] = Surface(name, self)
         return self.surfaces[name]
 
@@ -5207,7 +5207,7 @@ class MO:
                 " &\n" + ",".join([str(v) for v in coord3]),
             ]
         )
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.surfaces[name] = Surface(name, self)
         return self.surfaces[name]
 
@@ -5253,7 +5253,7 @@ class MO:
         if name is None:
             name = make_name("r", self.regions.keys())
         cmd = "/".join(["region", name, boolstr])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.regions[name] = Region(name, self)
         return self.regions[name]
 
@@ -5270,7 +5270,7 @@ class MO:
         if name is None:
             name = make_name("mr", self.mregions.keys())
         cmd = "/".join(["mregion", name, boolstr])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         self.mregions[name] = MRegion(name, self)
         return self.mregions[name]
 
@@ -5285,7 +5285,7 @@ class MO:
         """
         name = region.name
         cmd = "/".join(["rmregion", name])
-        self.sendline(cmd)
+        self.sendcmd(cmd)
         if rmpoints:
             self.rmpoint_compress(filter_bool=filter_bool, resetpts_itp=resetpts_itp)
 
@@ -5297,7 +5297,7 @@ class MO:
                 cmd.append("y")
             for a in args:
                 cmd.append(a)
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def quality_aspect(self, save_att=False):
         self.quality(quality_type="aspect", save_att=save_att)
@@ -5333,7 +5333,7 @@ class MO:
         cmd = ["rmmat", str(material_number), option]
         if exclusive:
             cmd.append("exclusive")
-        self.sendline("/".join(cmd))
+        self.sendcmd("/".join(cmd))
 
     def rmmat_element(self, material_number: int, exclusive=False):
         """
@@ -5372,7 +5372,7 @@ class Surface:
 
     def release(self):
         cmd = "surface/" + self.name + "/release"
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
         del self._parent.surfaces[self.name]
 
 
@@ -5388,7 +5388,7 @@ class PSet:
 
     def delete(self):
         cmd = "pset/" + self.name + "/delete"
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
         del self._parent.pset[self.name]
 
     @property
@@ -5455,7 +5455,7 @@ class PSet:
                 "pset,get," + self.name,
             ]
         )
-        self._parent.sendline(cmd, verbose=verbose)
+        self._parent.sendcmd(cmd, verbose=verbose)
 
     def minmax(self, attname=None, stride=(1, 0, 0)):
         self._parent.printatt(
@@ -5477,7 +5477,7 @@ class PSet:
                 str(value),
             ]
         )
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
 
     def refine(
         self,
@@ -5517,7 +5517,7 @@ class PSet:
                     "amr " + str(prd_choice),
                 ]
             )
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
 
     def eltset(self, membership="inclusive", name=None):
         """
@@ -5532,7 +5532,7 @@ class PSet:
         if name is None:
             name = make_name("e", self._parent.eltset.keys())
         cmd = ["eltset", name, membership, "pset", "get", self.name]
-        self._parent.sendline("/".join(cmd))
+        self._parent.sendcmd("/".join(cmd))
         self._parent.eltset[name] = EltSet(name, self._parent)
         return self._parent.eltset[name]
 
@@ -5544,7 +5544,7 @@ class PSet:
         :type membership: str
         """
         e = self.eltset(membership=membership)
-        self._parent.sendline("pset/" + self.name + "/delete")
+        self._parent.sendcmd("pset/" + self.name + "/delete")
         self = e.pset(name=self.name)
 
     def interpolate(self, method, attsink, cmosrc, attsrc, interp_function=None):
@@ -5589,7 +5589,7 @@ class PSet:
             cmd += ["nearest", nearest]
         if interp_function is not None:
             cmd.append(interp_function)
-        self._parent.sendline("/".join(cmd))
+        self._parent.sendcmd("/".join(cmd))
 
     def interpolate_default(
         self,
@@ -5612,7 +5612,7 @@ class PSet:
         :tpye zonetype: string
         """
         cmd = ["pset", self.name, zonetype, filerootname + "_" + self.name, "ascii"]
-        self._parent.sendline("/".join(cmd))
+        self._parent.sendcmd("/".join(cmd))
 
     def scale(
         self,
@@ -5655,7 +5655,7 @@ class PSet:
             ",".join(scale_factor),
             ",".join(scale_center),
         ]
-        self._parent.sendline("/".join(cmd))
+        self._parent.sendcmd("/".join(cmd))
 
     def perturb(self, xfactor, yfactor, zfactor):
         """
@@ -5675,7 +5675,7 @@ class PSet:
             str(yfactor),
             str(zfactor),
         ]
-        self._parent.sendline("/".join(cmd))
+        self._parent.sendcmd("/".join(cmd))
 
     def trans(self, xold, xnew):
         """
@@ -5696,7 +5696,7 @@ class PSet:
             ",".join(xold),
             ",".join(xnew),
         ]
-        self._parent.sendline("/".join(cmd))
+        self._parent.sendcmd("/".join(cmd))
 
     def smooth(self, *args, **kwargs):
         if "algorithm" not in kwargs:
@@ -5706,7 +5706,7 @@ class PSet:
         cmd = ["smooth", "position", algorithm, "pset get " + self.name]
         for a in args:
             cmd.append(a)
-        self._parent.sendline("/".join(cmd))
+        self._parent.sendcmd("/".join(cmd))
 
     def pset_attribute(self, attribute, value, comparison="eq", name=None):
         """
@@ -5741,7 +5741,7 @@ class PSet:
             ]
         )
 
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
         self._parent.pset[name] = PSet(name, self._parent)
         return self._parent.pset[name]
 
@@ -5759,29 +5759,27 @@ class EltSet:
 
     def delete(self):
         cmd = "eltset/" + self.name + "/delete"
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
         del self._parent.eltset[self.name]
 
     def create_faceset(self, filename=None):
         if filename is None:
             filename = "faceset_" + self.name + ".avs"
         motmpnm = make_name("mo_tmp", self._parent._parent.mo.keys())
-        self._parent._parent.sendline(
-            "/".join(["cmo/copy", motmpnm, self._parent.name])
-        )
-        self._parent._parent.sendline("/".join(["cmo/DELATT", motmpnm, "itetclr0"]))
-        self._parent._parent.sendline("/".join(["cmo/DELATT", motmpnm, "itetclr1"]))
-        self._parent._parent.sendline("/".join(["cmo/DELATT", motmpnm, "facecol"]))
-        self._parent._parent.sendline("/".join(["cmo/DELATT", motmpnm, "idface0"]))
-        self._parent._parent.sendline("/".join(["cmo/DELATT", motmpnm, "idelem0"]))
-        self._parent._parent.sendline("eltset / eall / itetclr / ge / 0")
-        self._parent._parent.sendline("eltset/edel/not eall " + self.name)
-        self._parent._parent.sendline("rmpoint / element / eltset get edel")
-        self._parent._parent.sendline("rmpoint / compress")
-        self._parent._parent.sendline(
+        self._parent._parent.sendcmd("/".join(["cmo/copy", motmpnm, self._parent.name]))
+        self._parent._parent.sendcmd("/".join(["cmo/DELATT", motmpnm, "itetclr0"]))
+        self._parent._parent.sendcmd("/".join(["cmo/DELATT", motmpnm, "itetclr1"]))
+        self._parent._parent.sendcmd("/".join(["cmo/DELATT", motmpnm, "facecol"]))
+        self._parent._parent.sendcmd("/".join(["cmo/DELATT", motmpnm, "idface0"]))
+        self._parent._parent.sendcmd("/".join(["cmo/DELATT", motmpnm, "idelem0"]))
+        self._parent._parent.sendcmd("eltset / eall / itetclr / ge / 0")
+        self._parent._parent.sendcmd("eltset/edel/not eall " + self.name)
+        self._parent._parent.sendcmd("rmpoint / element / eltset get edel")
+        self._parent._parent.sendcmd("rmpoint / compress")
+        self._parent._parent.sendcmd(
             "/".join(["dump / avs2", filename, motmpnm, "0 0 0 2"])
         )
-        self._parent._parent.sendline("cmo / delete /" + motmpnm)
+        self._parent._parent.sendcmd("cmo / delete /" + motmpnm)
         self.faceset = FaceSet(filename, self)
         return self.faceset
 
@@ -5849,7 +5847,7 @@ class EltSet:
         cmd = "/".join(
             ["refine", "eltset", "eltset,get," + self.name, "amr " + str(amr)]
         )
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
 
     def pset(self, name=None):
         """
@@ -5861,7 +5859,7 @@ class EltSet:
         if name is None:
             name = make_name("p", self._parent.pset.keys())
         cmd = "/".join(["pset", name, "eltset", self.name])
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
         self._parent.pset[name] = PSet(name, self._parent)
         return self._parent.pset[name]
 
@@ -5875,7 +5873,7 @@ class EltSet:
                 str(value),
             ]
         )
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
 
 
 class Region:
@@ -5890,7 +5888,7 @@ class Region:
 
     def release(self):
         cmd = "region/" + self.name + "/release"
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
         del self._parent.regions[self.name]
 
 
@@ -5906,7 +5904,7 @@ class MRegion:
 
     def release(self):
         cmd = "mregion/" + self.name + "/release"
-        self._parent.sendline(cmd)
+        self._parent.sendcmd(cmd)
         del self._parent.mregions[self.name]
 
 

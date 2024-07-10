@@ -152,7 +152,7 @@ fs = stack_hex.create_boundary_facesets(
 )
 
 # Should add this to PyLaGriT, but I'm feeling lazy ;-)
-stack_hex.sendline("quality volume itetclr")
+stack_hex.sendcmd("quality volume itetclr")
 
 # Write exo file with boundary facesets
 stack_hex.dump_exo("transectNWSE.exo", facesets=fs.values())
