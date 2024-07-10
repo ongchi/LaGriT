@@ -5363,7 +5363,7 @@ class MO:
 class Surface:
     """Surface class"""
 
-    def __init__(self, name, parent):
+    def __init__(self, name: str, parent: MO):
         self.name = name
         self._parent = parent
 
