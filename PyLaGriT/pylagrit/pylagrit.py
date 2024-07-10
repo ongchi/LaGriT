@@ -6,7 +6,7 @@ from collections import OrderedDict
 from itertools import product
 from pathlib import Path
 from subprocess import call
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Literal, Optional, Tuple, cast
 from xml.dom import minidom
 
 import numpy
@@ -1580,16 +1580,16 @@ class MO:
     def __init__(self, name: str, parent: PyLaGriT):
         self.name = name
         self._parent = parent
-        self.pset = {}
-        self.eltset = {}
-        self.regions = {}
-        self.mregions = {}
-        self.surfaces = {}
+        self.pset: Dict[str, PSet] = {}
+        self.eltset: Dict[str, EltSet] = {}
+        self.regions: Dict[str, Region] = {}
+        self.mregions: Dict[str, MRegion] = {}
+        self.surfaces: Dict[str, Surface] = {}
 
     def __repr__(self):
         return self.name
 
-    def sendline(self, cmd, verbose=True, expectstr="Enter a command"):
+    def sendline(self, cmd: str, verbose=True, expectstr="Enter a command"):
         self._parent.sendcmd(
             "cmo select " + self.name, verbose=verbose, expectstr=expectstr
         )
@@ -1698,7 +1698,7 @@ class MO:
     def select(self):
         self.sendline("cmo/select/" + self.name)
 
-    def read(self, filename, filetype=None):
+    def read(self, filename: str, filetype: Optional[str] = None):
         # If filetype is lagrit, name is irrelevant
         if filetype is not None:
             cmd = "/".join(["read", filetype])
@@ -1715,8 +1715,8 @@ class MO:
         self,
         attname: Optional[str] = None,
         stride=(1, 0, 0),
-        pset=None,
-        eltset=None,
+        pset: Optional["PSet"] = None,
+        eltset: Optional["EltSet"] = None,
         ptype="value",
     ):
         stride = [str(v) for v in stride]
@@ -1725,41 +1725,23 @@ class MO:
             attname = "-all-"
 
         if pset is not None:
-            if isinstance(pset, PSet):
-                setname = pset.name
-            elif isinstance(pset, str):
-                setname = pset
-            else:
-                print(
-                    "ERROR: PSet object or name of PSet object as a string expected for pset"
-                )
-                return
             cmd = "/".join(
                 [
                     "cmo/printatt",
                     self.name,
                     attname,
                     ptype,
-                    ",".join(["pset", "get", setname]),
+                    ",".join(["pset", "get", str(pset)]),
                 ]
             )
         elif eltset is not None:
-            if isinstance(eltset, EltSet):
-                setname = eltset.name
-            elif isinstance(eltset, str):
-                setname = eltset
-            else:
-                print(
-                    "ERROR: EltSet object or name of EltSet object as a string expected for eltset"
-                )
-                return
             cmd = "/".join(
                 [
                     "cmo/printatt",
                     self.name,
                     attname,
                     ptype,
-                    ",".join(["eltset", "get", setname]),
+                    ",".join(["eltset", "get", str(eltset)]),
                 ]
             )
         else:
@@ -1769,7 +1751,7 @@ class MO:
 
         self.sendline(cmd)
 
-    def delatt(self, attnames, force=True):
+    def delatt(self, attnames: List[str], force=True):
         """
         Delete a list of attributes
 
@@ -1789,7 +1771,12 @@ class MO:
                 cmd = "/".join(["cmo/delatt", self.name, att])
             self.sendline(cmd)
 
-    def copyatt(self, attname_src, attname_sink=None, mo_src=None):
+    def copyatt(
+        self,
+        attname_src: str,
+        attname_sink: Optional[str] = None,
+        mo_src: Optional["MO"] = None,
+    ):
         """
         Add a list of attributes
 
@@ -1812,8 +1799,8 @@ class MO:
 
     def add_element_attribute(
         self,
-        attname,
-        keyword=None,
+        attname: str,
+        keyword: Optional[str] = None,
         vtype="VDOUBLE",
         rank="scalar",
         interpolate="linear",
@@ -1832,34 +1819,22 @@ class MO:
         :type name: str
 
         """
-        if keyword is None:
-            self.addatt(
-                attname,
-                vtype=vtype,
-                rank=rank,
-                length="nelements",
-                interpolate=interpolate,
-                persistence=persistence,
-                ioflag=ioflag,
-                value=value,
-            )
-        else:
-            self.addatt(
-                attname,
-                keyword=keyword,
-                vtype=vtype,
-                rank=rank,
-                length="nelements",
-                interpolate=interpolate,
-                persistence=persistence,
-                ioflag=ioflag,
-                value=value,
-            )
+        self.addatt(
+            attname,
+            keyword=keyword,
+            vtype=vtype,
+            rank=rank,
+            length="nelements",
+            interpolate=interpolate,
+            persistence=persistence,
+            ioflag=ioflag,
+            value=value,
+        )
 
     def add_node_attribute(
         self,
-        attname,
-        keyword=None,
+        attname: str,
+        keyword: Optional[str] = None,
         vtype="VDOUBLE",
         rank="scalar",
         interpolate="linear",
@@ -1878,34 +1853,22 @@ class MO:
         :type name: str
 
         """
-        if keyword is None:
-            self.addatt(
-                attname,
-                vtype=vtype,
-                rank=rank,
-                length="nnodes",
-                interpolate=interpolate,
-                persistence=persistence,
-                ioflag=ioflag,
-                value=value,
-            )
-        else:
-            self.addatt(
-                attname,
-                keyword=keyword,
-                vtype=vtype,
-                rank=rank,
-                length="nnodes",
-                interpolate=interpolate,
-                persistence=persistence,
-                ioflag=ioflag,
-                value=value,
-            )
+        self.addatt(
+            attname,
+            keyword=keyword,
+            vtype=vtype,
+            rank=rank,
+            length="nnodes",
+            interpolate=interpolate,
+            persistence=persistence,
+            ioflag=ioflag,
+            value=value,
+        )
 
     def addatt(
         self,
-        attname,
-        keyword=None,
+        attname: str,
+        keyword: Optional[str] = None,
         vtype="VDOUBLE",
         rank="scalar",
         length="nnodes",
@@ -1962,22 +1925,27 @@ class MO:
         """
         self.addatt(attr_names, keyword="voronoi_varea")
 
-    def minmax(self, attname=None, stride=(1, 0, 0)):
+    def minmax(self, attname: Optional[str] = None, stride=(1, 0, 0)):
         self.printatt(attname=attname, stride=stride, ptype="minmax")
 
     def minmax_xyz(self, stride=(1, 0, 0), verbose=True):
         cmd = "/".join(["cmo/printatt", self.name, "-xyz-", "minmax"])
         self.sendline(cmd, verbose=verbose)
 
-    def list(self, attname=None, stride=(1, 0, 0), pset=None):
+    def list(
+        self,
+        attname: Optional[str] = None,
+        stride=(1, 0, 0),
+        pset: Optional["PSet"] = None,
+    ):
         self.printatt(attname=attname, stride=stride, pset=pset, ptype="list")
 
-    def setatt(self, attname, value, stride=(1, 0, 0)):
+    def setatt(self, attname: str, value: int | float, stride=(1, 0, 0)):
         stride = [str(v) for v in stride]
         cmd = "/".join(["cmo/setatt", self.name, attname, ",".join(stride), str(value)])
         self.sendline(cmd)
 
-    def set_id(self, option, node_attname="id_node", elem_attname="id_elem"):
+    def set_id(self, option: str, node_attname="id_node", elem_attname="id_elem"):
         """
         This command creates integer attributes that contain the node and/or
         element number. If later operations delete nodes or
@@ -2101,7 +2069,13 @@ class MO:
         return atts
 
     def pset_geom(
-        self, mins, maxs, ctr=(0, 0, 0), geom="xyz", stride=(1, 0, 0), name=None
+        self,
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        ctr=(0, 0, 0),
+        geom="xyz",
+        stride=(1, 0, 0),
+        name: Optional[str] = None,
     ):
         """
         Define PSet by Geometry
@@ -2140,21 +2114,16 @@ class MO:
         if name is None:
             name = make_name("p", self.pset.keys())
 
-        mins = [str(v) for v in mins]
-        maxs = [str(v) for v in maxs]
-        stride = [str(v) for v in stride]
-        center = [str(v) for v in ctr]
-
         cmd = "/".join(
             [
                 "pset",
                 name,
                 "geom",
                 geom,
-                ",".join(stride),
-                ",".join(mins),
-                ",".join(maxs),
-                ",".join(center),
+                ",".join([str(v) for v in stride]),
+                ",".join([str(v) for v in mins]),
+                ",".join([str(v) for v in maxs]),
+                ",".join([str(v) for v in ctr]),
             ]
         )
         self.sendline(cmd)
@@ -2162,7 +2131,14 @@ class MO:
 
         return self.pset[name]
 
-    def pset_geom_xyz(self, mins, maxs, ctr=(0, 0, 0), stride=(1, 0, 0), name=None):
+    def pset_geom_xyz(
+        self,
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        ctr=(0, 0, 0),
+        stride=(1, 0, 0),
+        name: Optional[str] = None,
+    ):
         """
         Define PSet by Tetrahedral Geometry
 
@@ -2187,7 +2163,14 @@ class MO:
         """
         return self.pset_geom(geom="xyz", **minus_self(locals()))
 
-    def pset_geom_rtz(self, mins, maxs, ctr=(0, 0, 0), stride=(1, 0, 0), name=None):
+    def pset_geom_rtz(
+        self,
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        ctr=(0, 0, 0),
+        stride=(1, 0, 0),
+        name: Optional[str] = None,
+    ):
         """
         Forms a pset of nodes within the cylinder or cylindrical shell section
         given by radius1 to radius2, and angles theta1 to theta2 and height z1 to z2.
@@ -2218,7 +2201,14 @@ class MO:
         """
         return self.pset_geom(geom="rtz", **minus_self(locals()))
 
-    def pset_geom_rtp(self, mins, maxs, ctr=(0, 0, 0), stride=(1, 0, 0), name=None):
+    def pset_geom_rtp(
+        self,
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        ctr=(0, 0, 0),
+        stride=(1, 0, 0),
+        name: Optional[str] = None,
+    ):
         """
         Forms a pset of nodes within the sphere, sperical shell or sperical section
         given by radius1 to radius2, and angles theta1 to theta2 (0 - 180) and angles
@@ -2251,7 +2241,12 @@ class MO:
         return self.pset_geom(geom="rtp", **minus_self(locals()))
 
     def pset_attribute(
-        self, attribute, value, comparison="eq", stride=(1, 0, 0), name=None
+        self,
+        attribute: str,
+        value: int | float,
+        comparison="eq",
+        stride=(1, 0, 0),
+        name: Optional[str] = None,
     ):
         """
         Define PSet by attribute
@@ -2294,7 +2289,7 @@ class MO:
 
         return self.pset[name]
 
-    def compute_distance(self, mo, option="distance_field", attname="dfield"):
+    def compute_distance(self, mo: "MO", option="distance_field", attname="dfield"):
         """
         Compute distance from one mesh object to another
 
@@ -2333,7 +2328,7 @@ class MO:
 
         self.sendline("/".join(["compute", option, self.name, mo.name, attname]))
 
-    def compute_extrapolate(self, surf_mo, dir="zpos", attname="zic"):
+    def compute_extrapolate(self, surf_mo: "MO", dir="zpos", attname="zic"):
         """
         Given a 3D mesh and a 2D surface, this command will extrapolate a scalar
          value from that surface onto every point of the mesh.
@@ -2385,7 +2380,9 @@ class MO:
             )
         )
 
-    def pset_region(self, region, stride=(1, 0, 0), name=None):
+    def pset_region(
+        self, region: "Region", stride=(1, 0, 0), name: Optional[str] = None
+    ):
         """
         Define PSet by region
 
@@ -2411,7 +2408,9 @@ class MO:
 
         return self.pset[name]
 
-    def pset_surface(self, surface, stride=(1, 0, 0), name=None):
+    def pset_surface(
+        self, surface: "Surface", stride=(1, 0, 0), name: Optional[str] = None
+    ):
         """
         Define PSet by surface
 
@@ -2455,7 +2454,9 @@ class MO:
     #
     #    return self.pset[name]
 
-    def pset_bool(self, pset_list, boolean="union", name=None):
+    def pset_bool(
+        self, pset_list: List["PSet"], boolean="union", name: Optional[str] = None
+    ):
         """
         Return PSet from boolean operation on list of psets
 
@@ -2467,21 +2468,18 @@ class MO:
 
         # Create the new PSET in lagrit and the pylagrit object.
         cmd = ["pset", name, boolean]
-        if isinstance(pset_list, PSet):
-            cmd.append(pset_list.name)
-        elif isinstance(pset_list, list):
-            cmd.append(",".join([p.name for p in pset_list]))
+        cmd.append(",".join([p.name for p in pset_list]))
         self.sendline("/".join(cmd))
         self.pset[name] = PSet(name, self)
         return self.pset[name]
 
-    def pset_union(self, pset_list, name=None):
+    def pset_union(self, pset_list: List["PSet"], name: Optional[str] = None):
         return self.pset_bool(pset_list, boolean="union", name=name)
 
-    def pset_inter(self, pset_list, name=None):
+    def pset_inter(self, pset_list: List["PSet"], name: Optional[str] = None):
         return self.pset_bool(pset_list, boolean="inter", name=name)
 
-    def pset_not(self, pset_list, name=None):
+    def pset_not(self, pset_list: List["PSet"], name: Optional[str] = None):
         return self.pset_bool(pset_list, boolean="not", name=name)
 
     def resetpts_itp(self):
@@ -2491,7 +2489,9 @@ class MO:
         """
         self.sendline("resetpts/itp")
 
-    def eltset_object(self, mo, name=None, attr_name=None):
+    def eltset_object(
+        self, mo: "MO", name: Optional[str] = None, attr_name: Optional[str] = None
+    ):
         """
         Create element set from the intersecting elements with another mesh object
         """
@@ -2502,7 +2502,9 @@ class MO:
         self.eltset[name] = EltSet(name, self)
         return self.eltset[name]
 
-    def eltset_bool(self, eset_list, boolstr="union", name=None):
+    def eltset_bool(
+        self, eset_list: List["EltSet"], boolstr="union", name: Optional[str] = None
+    ):
         """
         Create element set from boolean operation of set of element sets
 
@@ -2521,32 +2523,29 @@ class MO:
         self.eltset[name] = EltSet(name, self)
         return self.eltset[name]
 
-    def eltset_union(self, eset_list, name=None):
+    def eltset_union(self, eset_list: List["EltSet"], name: Optional[str] = None):
         return self.eltset_bool(eset_list, "union", name=name)
 
-    def eltset_inter(self, eset_list, name=None):
+    def eltset_inter(self, eset_list: List["EltSet"], name: Optional[str] = None):
         return self.eltset_bool(eset_list, "inter", name=name)
 
-    def eltset_not(self, eset_list, name=None):
+    def eltset_not(self, eset_list: List["EltSet"], name: Optional[str] = None):
         return self.eltset_bool(eset_list, "not", name=name)
 
-    def eltset_region(self, region, name=None):
+    def eltset_region(self, region: "Region", name: Optional[str] = None):
         if name is None:
             name = make_name("e", self.eltset.keys())
-        if isinstance(region, Region):
-            region_name = region.name
-        elif isinstance(region, str):
-            region_name = region
-        else:
-            print("region must be a string or object of class Region")
-            return
-        cmd = "/".join(["eltset", name, "region", region_name])
+        cmd = "/".join(["eltset", name, "region", region.name])
         self.sendline(cmd)
         self.eltset[name] = EltSet(name, self)
         return self.eltset[name]
 
     def eltset_attribute(
-        self, attribute_name, attribute_value, boolstr="eq", name=None
+        self,
+        attribute_name: str,
+        attribute_value: int | float,
+        boolstr="eq",
+        name: Optional[str] = None,
     ):
         if name is None:
             name = make_name("e", self.eltset.keys())
@@ -2555,7 +2554,9 @@ class MO:
         self.eltset[name] = EltSet(name, self)
         return self.eltset[name]
 
-    def eltset_write(self, filename_root, eset_name=None, ascii=True):
+    def eltset_write(
+        self, filename_root: str, eset_name: Optional["EltSet"] = None, ascii=True
+    ):
         """
         Write element set(s) to a file in ascii or binary format
 
@@ -2600,28 +2601,16 @@ class MO:
         cmd = "/".join(["eltset", name, "write", filename_root, ascii])
         self._parent.sendcmd(cmd)
 
-    def rmpoint_pset(self, pset, itype="exclusive", compress=True, resetpts_itp=True):
-        if isinstance(pset, PSet):
-            name = pset.name
-        elif isinstance(pset, str):
-            name = pset
-        else:
-            print("p must be a string or object of class PSet")
-            return
-        cmd = "rmpoint/pset,get," + name + "/" + itype
+    def rmpoint_pset(
+        self, pset: "PSet", itype="exclusive", compress=True, resetpts_itp=True
+    ):
+        cmd = "rmpoint/pset,get," + pset.name + "/" + itype
         self.sendline(cmd)
         if compress:
             self.rmpoint_compress(resetpts_itp=resetpts_itp)
 
-    def rmpoint_eltset(self, eltset, compress=True, resetpts_itp=True):
-        if isinstance(eltset, EltSet):
-            name = eltset.name
-        elif isinstance(eltset, str):
-            name = eltset
-        else:
-            print("eltset must be a string or object of class EltSet")
-            return
-        cmd = "rmpoint/element/eltset,get," + name
+    def rmpoint_eltset(self, eltset: "EltSet", compress=True, resetpts_itp=True):
+        cmd = "rmpoint/element/eltset,get," + eltset.name
         self.sendline(cmd)
         if compress:
             self.rmpoint_compress(resetpts_itp=resetpts_itp)
@@ -2647,7 +2636,12 @@ class MO:
         self.sendline("reorder / " + self.name + " / ikey")
         self.sendline("cmo / DELATT / " + self.name + " / ikey")
 
-    def trans(self, xold, xnew, stride=(1, 0, 0)):
+    def trans(
+        self,
+        xold: Tuple[float, float, float],
+        xnew: Tuple[float, float, float],
+        stride=(1, 0, 0),
+    ):
         """Translate mesh according to old coordinates "xold" to new coordinates "xnew"
 
         :param xold: old position
@@ -2657,14 +2651,24 @@ class MO:
         :param stride: tuple of (first, last, stride) of points
         :type stride: tuple(int,int,int)
         """
-        xold = [str(v) for v in xold]
-        xnew = [str(v) for v in xnew]
-        stride = [str(v) for v in stride]
-        cmd = "/".join(["trans", ",".join(stride), ",".join(xold), ",".join(xnew)])
+        cmd = "/".join(
+            [
+                "trans",
+                ",".join([str(v) for v in stride]),
+                ",".join([str(v) for v in xold]),
+                ",".join([str(v) for v in xnew]),
+            ]
+        )
         self.sendline(cmd)
 
     def rotateln(
-        self, coord1, coord2, theta, center=(0, 0, 0), copy=False, stride=(1, 0, 0)
+        self,
+        coord1: Tuple[float, float, float],
+        coord2: Tuple[float, float, float],
+        theta: float,
+        center=(0.0, 0.0, 0.0),
+        copy=False,
+        stride=(1, 0, 0),
     ):
         """
         Rotates a point distribution (specified by ifirst,ilast,istride) about a line.
@@ -2732,35 +2736,27 @@ class MO:
             >>> stack_hex.dump_ats_xml("rotated.xml", "rotated.exo")
             >>> stack_hex.paraview()
         """
-        stride = [str(v) for v in stride]
-        coord1 = [str(v) for v in coord1]
-        coord2 = [str(v) for v in coord2]
-        center = [str(v) for v in center]
-        if copy:
-            copystr = "copy"
-        else:
-            copystr = "nocopy"
         self.sendline(
             "/".join(
                 [
                     "rotateln",
-                    ",".join(stride),
-                    copystr,
-                    ",".join(coord1),
-                    ",".join(coord2),
+                    ",".join([str(v) for v in stride]),
+                    "copy" if copy else "nocopy",
+                    ",".join([str(v) for v in coord1]),
+                    ",".join([str(v) for v in coord2]),
                     str(theta),
-                    ",".join(center),
+                    ",".join([str(v) for v in center]),
                 ]
             )
         )
 
     def massage(
         self,
-        bisection_len,
-        merge_len,
-        toldamage,
-        tolroughness=None,
-        stride=None,
+        bisection_len: float,
+        merge_len: float,
+        toldamage: float,
+        tolroughness: Optional[float] = None,
+        stride: Optional[Tuple[int, int, int]] = None,
         nosmooth=False,
         norecon=False,
         strictmergelength=False,
@@ -2822,8 +2818,7 @@ class MO:
         if tolroughness is not None:
             cmd.append(str(tolroughness))
         if stride is not None:
-            stride = [str(x) for x in stride]
-            cmd.append(",".join(stride))
+            cmd.append(",".join([str(x) for x in stride]))
 
         # Add optional boolean arguments
         _iter = zip(
@@ -2851,13 +2846,13 @@ class MO:
 
     def massage2(
         self,
-        filename,
-        min_scale,
-        bisection_len,
-        merge_len,
-        toldamage,
-        tolroughness=None,
-        stride=None,
+        filename: str,
+        min_scale: float,
+        bisection_len: float,
+        merge_len: float,
+        toldamage: float,
+        tolroughness: Optional[float] = None,
+        stride: Optional[Tuple[int, int, int]] = None,
         nosmooth=False,
         norecon=False,
         strictmergelength=False,
@@ -2893,8 +2888,7 @@ class MO:
         if tolroughness is not None:
             cmd.append(str(tolroughness))
         if stride is not None:
-            stride = [str(x) for x in stride]
-            cmd.append(",".join(stride))
+            cmd.append(",".join([str(x) for x in stride]))
 
         # Add optional boolean arguments
         _iter = zip(
@@ -2920,7 +2914,7 @@ class MO:
         [cmd.append(c[0]) for c in _iter if c[1]]
         self.sendline("/".join(cmd))
 
-    def perturb(self, xfactor, yfactor, zfactor, stride=(1, 0, 0)):
+    def perturb(self, xfactor: float, yfactor: float, zfactor: float, stride=(1, 0, 0)):
         """
         This command moves node coordinates in the following manner.
 
@@ -2942,12 +2936,12 @@ class MO:
 
     def upscale(
         self,
-        method,
-        attsink,
-        cmosrc,
-        attsrc=None,
+        method: str,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: Optional[str] = None,
         stride=(1, 0, 0),
-        boundary_choice=None,
+        boundary_choice: Optional[str] = None,
         keepatt=False,
         set_id=False,
     ):
@@ -2972,7 +2966,6 @@ class MO:
         :param boundary_choice: method of choice when source nodes are found on the boundary of multiple Voronoi volumes of sink nodes: single, divide, or multiple
         :type boundary_choice: str
         """
-        stride = [str(v) for v in stride]
         if attsrc is None:
             attsrc = attsink
         cmd = [
@@ -2980,7 +2973,7 @@ class MO:
             method,
             self.name,
             attsink,
-            ",".join(stride),
+            ",".join([str(v) for v in stride]),
             cmosrc.name,
             attsrc,
         ]
@@ -2997,11 +2990,11 @@ class MO:
 
     def upscale_ariave(
         self,
-        attsink,
-        cmosrc,
-        attsrc=None,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: Optional[str] = None,
         stride=(1, 0, 0),
-        boundary_choice=None,
+        boundary_choice: Optional[str] = None,
         keepatt=False,
         set_id=False,
     ):
@@ -3025,11 +3018,11 @@ class MO:
 
     def upscale_geoave(
         self,
-        attsink,
-        cmosrc,
-        attsrc=None,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: Optional[str] = None,
         stride=(1, 0, 0),
-        boundary_choice=None,
+        boundary_choice: Optional[str] = None,
         keepatt=False,
         set_id=False,
     ):
@@ -3053,11 +3046,11 @@ class MO:
 
     def upscale_harave(
         self,
-        attsink,
-        cmosrc,
-        attsrc=None,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: Optional[str] = None,
         stride=(1, 0, 0),
-        boundary_choice=None,
+        boundary_choice: Optional[str] = None,
         keepatt=False,
         set_id=False,
     ):
@@ -3081,11 +3074,11 @@ class MO:
 
     def upscale_min(
         self,
-        attsink,
-        cmosrc,
-        attsrc=None,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: Optional[str] = None,
         stride=(1, 0, 0),
-        boundary_choice=None,
+        boundary_choice: Optional[str] = None,
         keepatt=False,
         set_id=False,
     ):
@@ -3109,11 +3102,11 @@ class MO:
 
     def upscale_max(
         self,
-        attsink,
-        cmosrc,
-        attsrc=None,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: Optional[str] = None,
         stride=(1, 0, 0),
-        boundary_choice=None,
+        boundary_choice: Optional[str] = None,
         keepatt=False,
         set_id=False,
     ):
@@ -3137,11 +3130,11 @@ class MO:
 
     def upscale_sum(
         self,
-        attsink,
-        cmosrc,
-        attsrc=None,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: Optional[str] = None,
         stride=(1, 0, 0),
-        boundary_choice=None,
+        boundary_choice: Optional[str] = None,
         keepatt=False,
         set_id=False,
     ):
@@ -3163,7 +3156,7 @@ class MO:
             "sum", attsink, cmosrc, attsrc, stride, boundary_choice, keepatt, set_id
         )
 
-    def gmv(self, exe=None, filename=None):
+    def gmv(self, exe: Optional[str] = None, filename: Optional[str] = None):
         if filename is None:
             filename = self.name + ".gmv"
         if exe is not None:
@@ -3171,7 +3164,7 @@ class MO:
         self.sendline("dump/gmv/" + filename + "/" + self.name)
         os.system(self._parent.gmv_exe + " -i " + filename)  # noqa: S605
 
-    def paraview(self, exe=None, filename=None):
+    def paraview(self, exe: Optional[str] = None, filename: Optional[str] = None):
         if filename is None:
             filename = self.name + ".inp"
         if exe is not None:
@@ -3218,7 +3211,12 @@ class MO:
         self.sendline(cmd)
 
     def dump_avs2(
-        self, filename, points=True, elements=True, node_attr=True, element_attr=True
+        self,
+        filename: str,
+        points=True,
+        elements=True,
+        node_attr=True,
+        element_attr=True,
     ):
         """
         Dump avs file
@@ -3243,7 +3241,13 @@ class MO:
             int(element_attr),
         )
 
-    def dump_exo(self, filename, psets=False, eltsets=False, facesets=[]):  # noqa: B006
+    def dump_exo(
+        self,
+        filename: str,
+        psets=False,
+        eltsets=False,
+        facesets: Optional[List["FaceSet"]] = None,
+    ):
         """
         Dump exo file
 
@@ -3281,26 +3285,26 @@ class MO:
             cmd = "/".join([cmd, "eltsets"])
         else:
             cmd = "/".join([cmd, " "])
-        if len(facesets):
+        if facesets is not None:
             cmd = "/".join([cmd, "facesets"])
             for fc in facesets:
                 cmd += " &\n" + fc.filename
         self.sendline(cmd)
 
-    def dump_gmv(self, filename, format="binary"):
+    def dump_gmv(self, filename: str, format="binary"):
         self.dump(filename, "gmv", format)
 
-    def dump_fehm(self, filename, *args):
+    def dump_fehm(self, filename: str, *args):
         self.dump(filename, "fehm", *args)
 
-    def dump_lg(self, filename, format="binary"):
+    def dump_lg(self, filename: str, format="binary"):
         self.dump(filename, "lagrit", format)
 
-    def dump_zone_imt(self, filename, imt_value):
+    def dump_zone_imt(self, filename: str, imt_value: int):
         cmd = ["dump", "zone_imt", filename, self.name, str(imt_value)]
         self.sendline("/".join(cmd))
 
-    def dump_pflotran(self, filename_root, nofilter_zero=False):
+    def dump_pflotran(self, filename_root: str, nofilter_zero=False):
         """
         Dump PFLOTRAN UGE file
 
@@ -3330,7 +3334,7 @@ class MO:
         self.sendline("/".join(cmd))
 
     def dump_zone_outside(
-        self, filename, keepatt=False, keepatt_median=False, keepatt_voronoi=False
+        self, filename: str, keepatt=False, keepatt_median=False, keepatt_voronoi=False
     ):
         cmd = ["dump", "zone_outside", filename, self.name]
         if keepatt:
@@ -3344,7 +3348,13 @@ class MO:
             cmd.append("keepatt_voronoi")
         self.sendline("/".join(cmd))
 
-    def dump_ats_xml(self, filename, meshfilename, matnames={}, facenames={}):  # noqa: B006
+    def dump_ats_xml(
+        self,
+        filename: str,
+        meshfilename: str,
+        matnames: Dict[str, int] = {},  # noqa: B006
+        facenames: Dict[str, int] = {},  # noqa: B006
+    ):
         """
         Write ats style xml file with regions
         :param filename: Name of xml to write
@@ -3542,7 +3552,7 @@ class MO:
         with open(filename, "w") as f:
             f.write(m_reparsed.toprettyxml(indent="  "))
 
-    def dump_pset(self, filerootname, zonetype="zone", pset=[]):  # noqa: B006
+    def dump_pset(self, filerootname: str, zonetype="zone", pset: List["PSet"] = []):  # noqa: B006
         """
         Dump zone file of psets
         :arg filerootname: rootname of files to create, pset name will be added to name
@@ -3565,7 +3575,11 @@ class MO:
         del self._parent.mo[self.name]
 
     def create_boundary_facesets(
-        self, stacked_layers=False, base_name=None, reorder=False, external=True
+        self,
+        stacked_layers=False,
+        base_name: Optional[str] = None,
+        reorder=False,
+        external=True,
     ):
         """
         Creates facesets for each boundary and writes associated avs faceset file
@@ -3583,7 +3597,7 @@ class MO:
         mo_surf.addatt("id_side", vtype="vint", rank="scalar", length="nelements")
         mo_surf.settets_normal()
         mo_surf.copyatt("itetclr", "id_side")
-        mo_surf.delatt("id_side")
+        mo_surf.delatt(["id_side"])
         fs = OrderedDict()
         if stacked_layers:
             pbot = mo_surf.pset_attribute("layertyp", -1)
@@ -3609,10 +3623,10 @@ class MO:
 
     def createpts(
         self,
-        crd,
-        npts,
-        mins,
-        maxs,
+        crd: str,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
@@ -3638,23 +3652,16 @@ class MO:
 
         """
 
-        npts = [str(v) for v in npts]
-        mins = [str(v) for v in mins]
-        maxs = [str(v) for v in maxs]
-        vc_switch = [str(v) for v in vc_switch]
-        rz_switch = [str(v) for v in rz_switch]
-        rz_value = [str(v) for v in rz_value]
-
         cmd = "/".join(
             [
                 "createpts",
                 crd,
-                ",".join(npts),
-                ",".join(mins),
-                ",".join(maxs),
-                ",".join(vc_switch),
-                ",".join(rz_switch),
-                ",".join(rz_value),
+                ",".join([str(v) for v in npts]),
+                ",".join([str(v) for v in mins]),
+                ",".join([str(v) for v in maxs]),
+                ",".join([str(v) for v in vc_switch]),
+                ",".join([str(v) for v in rz_switch]),
+                ",".join([str(v) for v in rz_value]),
             ]
         )
         self.sendline(cmd)
@@ -3664,15 +3671,22 @@ class MO:
                 cmd = "/".join(["connect", "noadd"])
             else:
                 cmd = "/".join(
-                    ["createpts", "brick", crd, ",".join(npts), "1,0,0", "connect"]
+                    [
+                        "createpts",
+                        "brick",
+                        crd,
+                        ",".join([str(v) for v in npts]),
+                        "1,0,0",
+                        "connect",
+                    ]
                 )
             self.sendline(cmd)
 
     def createpts_xyz(
         self,
-        npts,
-        mins,
-        maxs,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
@@ -3684,10 +3698,10 @@ class MO:
 
     def createpts_dxyz(
         self,
-        dxyz,
-        mins,
-        maxs,
-        clip="under",
+        dxyz: Tuple[float, float, float],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        clip: str | Tuple[str, str, str] = "under",
         hard_bound: str | Tuple[str, str, str] = "min",
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
@@ -3721,42 +3735,50 @@ class MO:
         if isinstance(hard_bound, str):
             hard_bound = (hard_bound, hard_bound, hard_bound)
         if isinstance(clip, str):
-            clip = numpy.array([clip, clip, clip])
-        dxyz = numpy.array(dxyz)
-        mins = numpy.array(mins)
-        maxs = numpy.array(maxs)
-        dxyz[dxyz == 0] = 1
-        npts = numpy.zeros_like(dxyz).astype("int")
-        for i, cl in enumerate(clip):
+            clips = [clip, clip, clip]
+        else:
+            clips = clip
+        dxyz_ar = numpy.array(dxyz)
+        mins_ar = numpy.array(mins)
+        maxs_ar = numpy.array(maxs)
+        dxyz_ar[dxyz_ar == 0] = 1
+        npts = numpy.zeros_like(dxyz_ar).astype("int")
+        for i, cl in enumerate(clips):
             if cl == "under":
-                npts[i] = int(numpy.floor((maxs[i] - mins[i]) / dxyz[i]))
+                npts[i] = int(numpy.floor((maxs_ar[i] - mins_ar[i]) / dxyz_ar[i]))
             elif cl == "over":
-                npts[i] = int(numpy.ceil((maxs[i] - mins[i]) / dxyz[i]))
+                npts[i] = int(numpy.ceil((maxs_ar[i] - mins_ar[i]) / dxyz_ar[i]))
             else:
                 print("Error: unrecognized clip option")
                 return
         for i, bnd in enumerate(hard_bound):
             if bnd == "min":
-                maxs[i] = mins[i] + npts[i] * dxyz[i]
+                maxs_ar[i] = mins_ar[i] + npts[i] * dxyz_ar[i]
             elif bnd == "max":
-                mins[i] = maxs[i] - npts[i] * dxyz[i]
+                mins_ar[i] = maxs_ar[i] - npts[i] * dxyz_ar[i]
             else:
                 print("Error: unrecognized hard_bound option")
                 return
         npts += 1
-        npts.astype("int")
         vc_switch = (1, 1, 1)  # always vertex nodes for dxyz method
         self.createpts(
-            "xyz", npts, mins, maxs, vc_switch, rz_switch, rz_value, connect=connect
+            "xyz",
+            npts.tolist(),
+            mins_ar.tolist(),
+            maxs_ar.tolist(),
+            vc_switch,
+            rz_switch,
+            rz_value,
+            connect=connect,
         )
         if self._parent.verbose:
             self.minmax_xyz()
 
     def createpts_rtz(
         self,
-        npts,
-        mins,
-        maxs,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
@@ -3768,9 +3790,9 @@ class MO:
 
     def createpts_rtp(
         self,
-        npts,
-        mins,
-        maxs,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_value=(1, 1, 1),
@@ -3781,7 +3803,12 @@ class MO:
         )
 
     def createpts_line(
-        self, npts, mins, maxs, vc_switch=(1, 1, 1), rz_switch=(1, 1, 1)
+        self,
+        npts: int,
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        vc_switch=(1, 1, 1),
+        rz_switch=(1, 1, 1),
     ):
         """
         Create and Connect Points in a line
@@ -3799,11 +3826,6 @@ class MO:
 
         """
 
-        mins = [str(v) for v in mins]
-        maxs = [str(v) for v in maxs]
-        vc_switch = [str(v) for v in vc_switch]
-        rz_switch = [str(v) for v in rz_switch]
-
         cmd = "/".join(
             [
                 "createpts",
@@ -3811,19 +3833,19 @@ class MO:
                 str(npts),
                 " ",
                 " ",
-                ",".join(mins + maxs),
-                ",".join(vc_switch),
-                ",".join(rz_switch),
+                ",".join([str(v) for v in mins + maxs]),
+                ",".join([str(v) for v in vc_switch]),
+                ",".join([str(v) for v in rz_switch]),
             ]
         )
         self.sendline(cmd)
 
     def createpts_brick(
         self,
-        crd,
-        npts,
-        mins,
-        maxs,
+        crd: str,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_vls=(1, 1, 1),
@@ -3860,8 +3882,6 @@ class MO:
         """
 
         ni, nj, nk = map(str, npts)
-        mins = [float(v) for v in mins]
-        maxs = [float(v) for v in maxs]
         xmn, ymn, zmn = map(str, mins)
         xmx, ymx, zmx = map(str, maxs)
         iiz, ijz, ikz = map(str, vc_switch)
@@ -3878,9 +3898,9 @@ class MO:
 
     def createpts_brick_xyz(
         self,
-        npts,
-        mins,
-        maxs,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_vls=(1, 1, 1),
@@ -3890,9 +3910,9 @@ class MO:
 
     def createpts_brick_rtz(
         self,
-        npts,
-        mins,
-        maxs,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_vls=(1, 1, 1),
@@ -3902,20 +3922,25 @@ class MO:
 
     def createpts_brick_rtp(
         self,
-        npts,
-        mins,
-        maxs,
+        npts: Tuple[int, int, int],
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
         vc_switch=(1, 1, 1),
         rz_switch=(1, 1, 1),
         rz_vls=(1, 1, 1),
     ):
         """Create and connect spherical coordinates."""
-        self.createpts_brick(npts, **minus_self(locals()))
+        self.createpts_brick("rtp", **minus_self(locals()))
 
     def createpts_median(self):
         self.sendline("createpts/median")
 
-    def subset(self, mins, maxs, geom="xyz"):
+    def subset(
+        self,
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        geom="xyz",
+    ):
         """
         Return Mesh Object Subset
 
@@ -3959,12 +3984,14 @@ class MO:
         lg = self._parent
         new_mo = lg.copy(self)
         sub_pts = new_mo.pset_geom(mins, maxs, geom=geom)
-        rm_pts = new_mo.pset_not(sub_pts)
+        rm_pts = new_mo.pset_not([sub_pts])
 
         new_mo.rmpoint_pset(rm_pts)
         return new_mo
 
-    def subset_xyz(self, mins, maxs):
+    def subset_xyz(
+        self, mins: Tuple[float, float, float], maxs: Tuple[float, float, float]
+    ):
         """
         Return Tetrehedral MO Subset
 
@@ -3981,7 +4008,12 @@ class MO:
         """
         return self.subset(geom="xyz", **minus_self(locals()))
 
-    def quadxy(self, nnodes, pts, connect=True):
+    def quadxy(
+        self,
+        nnodes: Tuple[int, int, int],
+        pts: List[Tuple[float, float, float]],
+        connect=True,
+    ):
         """
         Define an arbitrary, logical quad of points in 3D space
         with nnodes(x,y,z) nodes. By default, the nodes will be connected.
@@ -4025,7 +4057,6 @@ class MO:
         self.select()
         quadpts = [n for n in nnodes if n != 1]
         assert len(quadpts) == 2, "nnodes must have one value == 1 and two values > 1"  # noqa: S101
-        nnodes = [str(v) for v in nnodes]
 
         c = ""
         for v in pts:
@@ -4035,11 +4066,23 @@ class MO:
 
         if connect:
             cmd = "/".join(
-                ["createpts", "brick", "xyz", ",".join(nnodes), "1,0,0", "connect"]
+                [
+                    "createpts",
+                    "brick",
+                    "xyz",
+                    ",".join(map(str, nnodes)),
+                    "1,0,0",
+                    "connect",
+                ]
             )
             self.sendline(cmd)
 
-    def quadxyz(self, nnodes, pts, connect=True):
+    def quadxyz(
+        self,
+        nnodes: Tuple[int, int, int],
+        pts: List[Tuple[float, float, float]],
+        connect=True,
+    ):
         """
          Define an arbitrary and logical set of points in 3D (xyz) space.
          The set of points will be connected into hexahedrons by default. Set 'connect=False' to prevent connection.
@@ -4091,8 +4134,7 @@ class MO:
         self.select()
         assert len(nnodes) == 3, "nnodes must contain three values"  # noqa: S101
         assert len(pts) == 8, "pts must contain eight sets of points"  # noqa: S101
-        nnodes = [str(v) for v in nnodes]
-        cmd = "/".join(["quadxyz", ",".join(nnodes)])
+        cmd = "/".join(["quadxyz", ",".join(map(str, nnodes))])
         for v in pts:
             assert len(v) == 3, "each entry in pts must contain 3 (x,y,z) values"  # noqa: S101
             cmd += "/ &\n" + ",".join(list(map(str, v)))
@@ -4100,11 +4142,24 @@ class MO:
 
         if connect:
             cmd = "/".join(
-                ["createpts", "brick", "xyz", ",".join(nnodes), "1,0,0", "connect"]
+                [
+                    "createpts",
+                    "brick",
+                    "xyz",
+                    ",".join(map(str, nnodes)),
+                    "1,0,0",
+                    "connect",
+                ]
             )
             self.sendline(cmd)
 
-    def rzbrick(self, n_ijk, connect=True, stride=(1, 0, 0), coordinate_space="xyz"):
+    def rzbrick(
+        self,
+        n_ijk: Tuple[int, int, int],
+        connect=True,
+        stride=(1, 0, 0),
+        coordinate_space="xyz",
+    ):
         """
         Builds a brick mesh and generates a nearest neighbor connectivity matrix
 
@@ -4124,14 +4179,12 @@ class MO:
         :type coordinate_space: str
         """
 
-        coordinate_space = coordinate_space.lower()
         assert coordinate_space in ["xyz", "rtz", "rtp"], "Unknown coordinate space"  # noqa: S101
 
         self.select()
         cmd = f"rzbrick/{coordinate_space}"
 
         for v in [n_ijk, stride]:
-            assert len(v) == 3, "vectors must be of length 3 (x,y,z)"  # noqa: S101
             cmd += "/" + ",".join(list(map(str, v)))
 
         if connect:
@@ -4139,7 +4192,9 @@ class MO:
 
         self.sendline(cmd)
 
-    def subset_rtz(self, mins, maxs):
+    def subset_rtz(
+        self, mins: Tuple[float, float, float], maxs: Tuple[float, float, float]
+    ):
         """
         Return Cylindrical MO Subset
 
@@ -4156,7 +4211,9 @@ class MO:
         """
         return self.subset(geom="rtz", **minus_self(locals()))
 
-    def subset_rtp(self, mins, maxs):
+    def subset_rtp(
+        self, mins: Tuple[float, float, float], maxs: Tuple[float, float, float]
+    ):
         """
         Return Spherical MO Subset
 
@@ -4173,7 +4230,7 @@ class MO:
         """
         return self.subset(geom="rtp", **minus_self(locals()))
 
-    def grid2grid(self, ioption, name=None):
+    def grid2grid(self, ioption: str, name: Optional[str] = None):
         """
         Convert a mesh with one element type to a mesh with another
 
@@ -4201,7 +4258,7 @@ class MO:
         self._parent.mo[name] = MO(name, self._parent)
         return self._parent.mo[name]
 
-    def grid2grid_tree_to_fe(self, name=None):
+    def grid2grid_tree_to_fe(self, name: Optional[str] = None):
         """
         Quadtree or octree grid to grid with no parent-type elements.
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4211,7 +4268,7 @@ class MO:
         """
         return self.grid2grid(ioption="tree_to_fe", **minus_self(locals()))
 
-    def grid2grid_quadtotri2(self, name=None):
+    def grid2grid_quadtotri2(self, name: Optional[str] = None):
         """
         Quad to 2 triangles, no new points.
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4221,7 +4278,7 @@ class MO:
         """
         return self.grid2grid(ioption="quadtotri2", **minus_self(locals()))
 
-    def grid2grid_prismtotet3(self, name=None):
+    def grid2grid_prismtotet3(self, name: Optional[str] = None):
         """
         Quad to 2 triangles, no new points.
         Prism to 3 tets, no new points.
@@ -4232,7 +4289,7 @@ class MO:
         """
         return self.grid2grid(ioption="prismtotet3", **minus_self(locals()))
 
-    def grid2grid_quadtotri4(self, name=None):
+    def grid2grid_quadtotri4(self, name: Optional[str] = None):
         """
         Quad to 4 triangles, with one new point
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4242,7 +4299,7 @@ class MO:
         """
         return self.grid2grid(ioption="quadtotri4", **minus_self(locals()))
 
-    def grid2grid_pyrtotet4(self, name=None):
+    def grid2grid_pyrtotet4(self, name: Optional[str] = None):
         """
         Pyramid to 4 tets, with one new point
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4252,7 +4309,7 @@ class MO:
         """
         return self.grid2grid(ioption="pyrtotet4", **minus_self(locals()))
 
-    def grid2grid_hextotet5(self, name=None):
+    def grid2grid_hextotet5(self, name: Optional[str] = None):
         """
         Hex to 5 tets, no new points
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4262,7 +4319,7 @@ class MO:
         """
         return self.grid2grid(ioption="hextotet5", **minus_self(locals()))
 
-    def grid2grid_hextotet6(self, name=None):
+    def grid2grid_hextotet6(self, name: Optional[str] = None):
         """
         Hex to 6 tets, no new points
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4272,7 +4329,7 @@ class MO:
         """
         return self.grid2grid(ioption="hextotet6", **minus_self(locals()))
 
-    def grid2grid_prismtotet14(self, name=None):
+    def grid2grid_prismtotet14(self, name: Optional[str] = None):
         """
         Prism to 14 tets, four new points (1 + 3 faces)
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4282,7 +4339,7 @@ class MO:
         """
         return self.grid2grid(ioption="prismtotet14", **minus_self(locals()))
 
-    def grid2grid_prismtotet18(self, name=None):
+    def grid2grid_prismtotet18(self, name: Optional[str] = None):
         """
         Prism to 18 tets, four new points (1 + 3 faces)
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4292,7 +4349,7 @@ class MO:
         """
         return self.grid2grid(ioption="prismtotet18", **minus_self(locals()))
 
-    def grid2grid_hextotet24(self, name=None):
+    def grid2grid_hextotet24(self, name: Optional[str] = None):
         """
         Hex to 24 tets, seven new points (1 + 6 faces)
         :arg name: Internal Lagrit name of new mesh object, automatically created if None
@@ -4302,7 +4359,13 @@ class MO:
         """
         return self.grid2grid(ioption="hextotet24", **minus_self(locals()))
 
-    def connect(self, algorithm=None, option=None, stride=None, big_tet_coords=[]):  # noqa: B006
+    def connect(
+        self,
+        algorithm: Optional[str] = None,
+        option: Optional[str] = None,
+        stride: Optional[Tuple[int, int, int]] = None,
+        big_tet_coords: List[Tuple[float, float, float]] = [],  # noqa: B006
+    ):
         """
         Connect the nodes into a Delaunay tetrahedral or triangle grid.
 
@@ -4317,17 +4380,20 @@ class MO:
         if algorithm is not None:
             cmd.append(algorithm)
         if stride is not None and algorithm == "delaunay":
-            stride = [str(v) for v in stride]
-            cmd += [",".join(stride)]
+            cmd += [",".join(map(str, stride))]
             for b in big_tet_coords:
-                bs = [str(v) for v in b]
-                cmd += [",".join(bs)]
+                cmd += [",".join(map(str, b))]
         if option is not None:
             cmd += [option]
         cmd = "/".join(cmd)
         self.sendline(cmd)
 
-    def connect_delaunay(self, option=None, stride=None, big_tet_coords=[]):  # noqa: B006
+    def connect_delaunay(
+        self,
+        option: Optional[str] = None,
+        stride: Optional[Tuple[int, int, int]] = None,
+        big_tet_coords: List[Tuple[float, float, float]] = [],  # noqa: B006
+    ):
         """
         Connect the nodes into a Delaunay tetrahedral or triangle grid without adding nodes.
         """
@@ -4357,7 +4423,7 @@ class MO:
         """
         self.connect(algorithm="check_interface")
 
-    def copypts(self, elem_type="tet", name=None):
+    def copypts(self, elem_type="tet", name: Optional[str] = None):
         """
         Copy points from mesh object to new mesh object
 
@@ -4375,11 +4441,11 @@ class MO:
 
     def extrude(
         self,
-        offset,
+        offset: float,
         offset_type="const",
         return_type="volume",
-        direction=[],  # noqa: B006
-        name=None,
+        direction: Optional[Tuple[float, float, float]] = None,
+        name: Optional[str] = None,
     ):
         """
         Extrude mesh object to new mesh object
@@ -4408,13 +4474,19 @@ class MO:
         if name is None:
             name = make_name("mo", self._parent.mo.keys())
         cmd = ["extrude", name, self.name, offset_type, str(offset), return_type]
-        if len(direction) == 3:
-            cmd.append(",".join([str(v) for v in direction]))
+        if direction is not None:
+            cmd.append(",".join(map(str, direction)))
         self.sendline("/".join(cmd))
         self._parent.mo[name] = MO(name, self._parent)
         return self._parent.mo[name]
 
-    def refine_to_object(self, mo, level=None, imt=None, prd_choice=None):
+    def refine_to_object(
+        self,
+        mo: "MO",
+        level: Optional[int] = None,
+        imt: Optional[int] = None,
+        prd_choice: Optional[int] = None,
+    ):
         """
         Refine mesh at locations that intersect another mesh object
 
@@ -4458,7 +4530,7 @@ class MO:
             p.setatt("imt", 13)
             p.delete()
 
-    def intersect_elements(self, mo, attr_name=None):
+    def intersect_elements(self, mo: "MO", attr_name: Optional[str] = None):
         """
         This command takes two meshes and creates an element-based attribute in mesh1
         that contains the number of elements in mesh2 that intersected the respective
@@ -4476,7 +4548,7 @@ class MO:
 
     def extract_surfmesh(
         self,
-        name=None,
+        name: Optional[str] = None,
         stride=(1, 0, 0),
         reorder=False,
         resetpts_itp=True,
@@ -4493,15 +4565,15 @@ class MO:
 
     def interpolate(
         self,
-        method,
-        attsink,
-        cmosrc,
-        attsrc,
+        method: str,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: str,
         stride=(1, 0, 0),
-        tie_option=None,
-        flag_option=None,
-        keep_option=None,
-        interp_function=None,
+        tie_option: Optional[str] = None,
+        flag_option: Optional[str] = None,
+        keep_option: Optional[str] = None,
+        interp_function: Optional[str] = None,
     ):
         """
         Interpolate values from attribute attsrc from mesh object cmosrc to current mesh object
@@ -4527,31 +4599,36 @@ class MO:
         self.sendline("/".join(cmd))
 
     def interpolate_voronoi(
-        self, attsink, cmosrc, attsrc, stride=(1, 0, 0), interp_function=None
+        self,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: str,
+        stride=(1, 0, 0),
+        interp_function: Optional[str] = None,
     ):
         self.interpolate("voronoi", **minus_self(locals()))
 
     def interpolate_map(
         self,
-        attsink,
-        cmosrc,
-        attsrc,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: str,
         stride=(1, 0, 0),
-        tie_option=None,
-        flag_option=None,
-        keep_option=None,
-        interp_function=None,
+        tie_option: Optional[str] = None,
+        flag_option: Optional[str] = None,
+        keep_option: Optional[str] = None,
+        interp_function: Optional[str] = None,
     ):
         self.interpolate("map", **minus_self(locals()))
 
     def interpolate_continuous(
         self,
-        attsink,
-        cmosrc,
-        attsrc,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: str,
         stride=(1, 0, 0),
-        interp_function=None,
-        nearest=None,
+        interp_function: Optional[str] = None,
+        nearest: Optional[str] = None,
     ):
         stride = [str(v) for v in stride]
         cmd = [
@@ -4570,18 +4647,18 @@ class MO:
 
     def interpolate_default(
         self,
-        attsink,
-        cmosrc,
-        attsrc,
+        attsink: str,
+        cmosrc: "MO",
+        attsrc: str,
         stride=(1, 0, 0),
         tie_option="tiemax",
         flag_option="plus1",
         keep_option="delatt",
-        interp_function=None,
+        interp_function: Optional[str] = None,
     ):
         self.interpolate("default", **minus_self(locals()))
 
-    def copy(self, name=None):
+    def copy(self, name: Optional[str] = None):
         """
         Copy mesh object
         """
@@ -4593,50 +4670,60 @@ class MO:
 
     def stack_layers(
         self,
-        filelist,
+        filelist: List[str],
         file_type="avs",
-        nlayers=None,
-        matids=None,
-        xy_subset=None,
-        buffer_opt=None,
-        truncate_opt=None,
-        pinchout_opt=None,
-        dpinchout_opt=(None, None),
+        nlayers: Optional[List[int]] = None,  # ref_num
+        matids: Optional[List[int]] = None,
+        xy_subset: Optional[
+            Tuple[float, float, float, float]
+        ] = None,  # minx, miny, maxx, maxy
+        buffer_opt: Optional[float] = None,
+        truncate_opt: Optional[int] = None,
+        pinchout_opt: Optional[float] = None,
+        dpinchout_opt: Optional[Tuple[float, float]] = None,
         flip_opt=False,
-        fill=False,
     ):
         if nlayers is None:
-            nlayers = [""] * (len(filelist) - 1)
+            refine_num = [""] * (len(filelist) - 1)
+        else:
+            refine_num = [str(n) for n in nlayers]
         if matids is None:
-            matids = [1] * len(filelist)
+            mat_num = ["1"] * len(filelist)
+        else:
+            mat_num = [str(m) for m in matids]
         cmd = ["stack/layers", file_type]
         if xy_subset is not None:
-            cmd.append(xy_subset)
+            cmd.append(",".join([str(v) for v in xy_subset]))
+
         cmd.append(" &")
         self.sendline("/".join(cmd), expectstr="\r\n")
+
         self._parent.sendcmd(
-            " ".join([filelist[0], str(matids[0]), "/ &"]), expectstr="\r\n"
+            " ".join([filelist[0], mat_num[0], "/ &"]), expectstr="\r\n"
         )
-        for f, nl, md in zip(filelist[1:-1], nlayers[0:-1], matids[1:-1]):
+        for file, matid, n_refine in zip(
+            filelist[1:-1], mat_num[1:-1], refine_num[0:-1]
+        ):
             self._parent.sendcmd(
-                " ".join([f, str(md), str(nl), "/ &"]), expectstr="\r\n"
+                " ".join([file, matid, n_refine, "/ &"]), expectstr="\r\n"
             )
-        cmd = [" ".join([filelist[-1], str(matids[-1]), str(nlayers[-1])])]
+        cmd = [" ".join([filelist[-1], mat_num[-1], refine_num[-1]])]
+
         if flip_opt is True:
             cmd.append("flip")
         if buffer_opt is not None:
-            cmd.append("buffer " + buffer_opt)
+            cmd.append(f"buffer {buffer_opt}")
         if truncate_opt is not None:
-            cmd.append("trunc " + truncate_opt)
+            cmd.append(f"trunc {truncate_opt}")
         if pinchout_opt is not None:
-            cmd.append("pinch " + pinchout_opt)
-        if dpinchout_opt[0] is not None:
-            cmd.append("dpinch " + str(dpinchout_opt[0]))
-            cmd.append("dmin " + str(dpinchout_opt[1]))
+            cmd.append(f"pinch {pinchout_opt}")
+        if dpinchout_opt is not None:
+            cmd.append(f"dpinch {dpinchout_opt[0]}")
+            cmd.append(f"dmin {dpinchout_opt[1]}")
         if not len(cmd) == 0:
             self._parent.sendcmd("/".join(cmd))
 
-    def stack_fill(self, name=None):
+    def stack_fill(self, name: Optional[str] = None):
         if name is None:
             name = make_name("mo", self._parent.mo.keys())
         self.sendline("/".join(["stack/fill", name, self.name]))
@@ -4644,9 +4731,14 @@ class MO:
         return self._parent.mo[name]
 
     def math(
-        self, operation, attsink, value=None, stride=(1, 0, 0), cmosrc=None, attsrc=None
+        self,
+        operation: str,
+        attsink: str,
+        value: Optional[float] = None,
+        stride: Tuple[int, int, int] = (1, 0, 0),
+        cmosrc: Optional["MO"] = None,
+        attsrc: Optional[str] = None,
     ):
-        stride = [str(v) for v in stride]
         if cmosrc is None:
             cmosrc = self
         if attsrc is None:
@@ -4656,7 +4748,7 @@ class MO:
             operation,
             self.name,
             attsink,
-            ",".join(stride),
+            ",".join([str(v) for v in stride]),
             cmosrc.name,
             attsrc,
         ]
@@ -4664,7 +4756,7 @@ class MO:
             cmd += [str(value)]
         self.sendline("/".join(cmd))
 
-    def settets(self, method=None):
+    def settets(self, method: Optional[str] = None):
         if method is None:
             self.sendline("settets")
         else:
@@ -4749,45 +4841,34 @@ class MO:
         stride=(1, 0, 0),
         values=[1.0],  # noqa: B006
         inclusive_flag="exclusive",
-        prd_choice=None,
+        prd_choice: Optional[int] = None,
     ):
-        stride = [str(v) for v in stride]
-        values = [str(v) for v in values]
-        if prd_choice is None:
-            cmd = "/".join(
-                [
-                    "refine",
-                    refine_option,
-                    field,
-                    interpolation,
-                    refine_type,
-                    " ".join(stride),
-                    "/".join(values),
-                    inclusive_flag,
-                ]
-            )
-        else:
-            cmd = "/".join(
-                [
-                    "refine",
-                    refine_option,
-                    field,
-                    interpolation,
-                    refine_type,
-                    " ".join(stride),
-                    "/".join(values),
-                    inclusive_flag,
-                    "amr " + str(prd_choice),
-                ]
-            )
-        self._parent.sendcmd(cmd)
+        cmd = [
+            "refine",
+            refine_option,
+            field,
+            interpolation,
+            refine_type,
+            " ".join([str(v) for v in stride]),
+            "/".join([str(v) for v in values]),
+            inclusive_flag,
+        ]
+        if prd_choice is not None:
+            cmd.append(f"amr {prd_choice}")
+        self._parent.sendcmd("/".join(cmd))
 
     def regnpts(
         self,
-        geom,
-        ray_points,
-        region,
-        ptdist,
+        geom: str,
+        ray_points: Tuple[  # xyz
+            Tuple[float, float, float],
+            Tuple[float, float, float],
+            Tuple[float, float, float],
+        ]
+        | Tuple[Tuple[float, float, float], Tuple[float, float, float]]  # rtz
+        | Tuple[Tuple[float, float, float]],  # rpt
+        region: "Region",
+        ptdist: str,
         stride=(1, 0, 0),
         irratio=0,
         rrz=0,
@@ -5013,11 +5094,17 @@ class MO:
             cmd.append("checkaxy")
         self.sendline("/".join(cmd))
 
-    def filter(self, stride=(1, 0, 0), tolerance=None, boolean=None, attribute=None):
+    def filter(
+        self,
+        stride=(1, 0, 0),
+        tolerance: Optional[float] = None,
+        boolean: Optional[Literal["min"] | Literal["max"]] = None,
+        attribute: Optional[str] = None,
+    ):
         stride = [str(v) for v in stride]
         cmd = ["filter", " ".join(stride)]
         if tolerance is not None:
-            cmd.append(tolerance)
+            cmd.append(str(tolerance))
         if boolean is not None and attribute is not None:
             cmd.append(boolean)
             cmd.append(attribute)
@@ -5043,7 +5130,7 @@ class MO:
         self.recon("1")
         self.resetpts_itp()
 
-    def surface(self, name=None, ibtype="reflect"):
+    def surface(self, name: Optional[str] = None, ibtype="reflect"):
         if name is None:
             name = make_name("s", self.surfaces.keys())
         cmd = "/".join(["surface", name, ibtype, "sheet", self.name])
@@ -5051,29 +5138,47 @@ class MO:
         self.surfaces[name] = Surface(name, self)
         return self.surfaces[name]
 
-    def surface_box(self, mins, maxs, name=None, ibtype="reflect"):
+    def surface_box(
+        self,
+        mins: Tuple[float, float, float],
+        maxs: Tuple[float, float, float],
+        name: Optional[str] = None,
+        ibtype="reflect",
+    ):
         if name is None:
             name = make_name("s", self.surfaces.keys())
-        mins = [str(v) for v in mins]
-        maxs = [str(v) for v in maxs]
-        cmd = "/".join(["surface", name, ibtype, "box", ",".join(mins), ",".join(maxs)])
+        cmd = "/".join(
+            [
+                "surface",
+                name,
+                ibtype,
+                "box",
+                ",".join([str(v) for v in mins]),
+                ",".join([str(v) for v in maxs]),
+            ]
+        )
         self.sendline(cmd)
         self.surfaces[name] = Surface(name, self)
         return self.surfaces[name]
 
-    def surface_cylinder(self, coord1, coord2, radius, name=None, ibtype="reflect"):
+    def surface_cylinder(
+        self,
+        coord1: Tuple[float, float, float],
+        coord2: Tuple[float, float, float],
+        radius: float,
+        name: Optional[str] = None,
+        ibtype="reflect",
+    ):
         if name is None:
             name = make_name("s", self.surfaces.keys())
-        coord1 = [str(v) for v in coord1]
-        coord2 = [str(v) for v in coord2]
         cmd = "/".join(
             [
                 "surface",
                 name,
                 ibtype,
                 "cylinder",
-                ",".join(coord1),
-                ",".join(coord2),
+                ",".join([str(v) for v in coord1]),
+                ",".join([str(v) for v in coord2]),
                 str(radius),
             ]
         )
@@ -5081,21 +5186,25 @@ class MO:
         self.surfaces[name] = Surface(name, self)
         return self.surfaces[name]
 
-    def surface_plane(self, coord1, coord2, coord3, name=None, ibtype="reflect"):
+    def surface_plane(
+        self,
+        coord1: Tuple[float, float, float],
+        coord2: Tuple[float, float, float],
+        coord3: Tuple[float, float, float],
+        name: Optional[str] = None,
+        ibtype="reflect",
+    ):
         if name is None:
             name = make_name("s", self.surfaces.keys())
-        coord1 = [str(v) for v in coord1]
-        coord2 = [str(v) for v in coord2]
-        coord3 = [str(v) for v in coord3]
         cmd = "/".join(
             [
                 "surface",
                 name,
                 ibtype,
                 "plane",
-                " &\n" + ",".join(coord1),
-                " &\n" + ",".join(coord2),
-                " &\n" + ",".join(coord3),
+                " &\n" + ",".join([str(v) for v in coord1]),
+                " &\n" + ",".join([str(v) for v in coord2]),
+                " &\n" + ",".join([str(v) for v in coord3]),
             ]
         )
         self.sendline(cmd)
@@ -5109,7 +5218,11 @@ class MO:
         """
         self.region(**minus_self(locals()))
 
-    def region(self, boolstr, name=None):
+    def region(
+        self,
+        boolstr: str,
+        name: Optional[str] = None,
+    ):
         """
         Create region using boolean string
 
@@ -5144,7 +5257,7 @@ class MO:
         self.regions[name] = Region(name, self)
         return self.regions[name]
 
-    def mregion(self, boolstr, name=None):
+    def mregion(self, boolstr: str, name: Optional[str] = None):
         """
         Create mregion using boolean string
 
@@ -5161,7 +5274,9 @@ class MO:
         self.mregions[name] = MRegion(name, self)
         return self.mregions[name]
 
-    def rmregion(self, region, rmpoints=True, filter_bool=False, resetpts_itp=True):
+    def rmregion(
+        self, region: "Region", rmpoints=True, filter_bool=False, resetpts_itp=True
+    ):
         """
         Remove points that lie inside region
 
@@ -5174,7 +5289,7 @@ class MO:
         if rmpoints:
             self.rmpoint_compress(filter_bool=filter_bool, resetpts_itp=resetpts_itp)
 
-    def quality(self, *args, quality_type=None, save_att=False):
+    def quality(self, *args, quality_type: Optional[str] = None, save_att=False):
         cmd = ["quality"]
         if quality_type is not None:
             cmd.append(quality_type)
@@ -5196,13 +5311,13 @@ class MO:
     def quality_edge_max(self, save_att=False):
         self.quality(quality_type="edge_max", save_att=save_att)
 
-    def quality_angle(self, value, boolean="gt", save_att=False):
+    def quality_angle(self, value: float, boolean="gt", save_att=False):
         self.quality(boolean, str(value), quality_type="angle", save_att=save_att)
 
     def quality_pcc(self):
         self.quality(quality_type="pcc")
 
-    def rmmat(self, material_number, option="", exclusive=False):
+    def rmmat(self, material_number: int, option="", exclusive=False):
         """
         This routine is used to remove points that are of a specified material value
         (itetclr for elements or imt for nodes). Elements with the specified material
@@ -5220,7 +5335,7 @@ class MO:
             cmd.append("exclusive")
         self.sendline("/".join(cmd))
 
-    def rmmat_element(self, material_number, exclusive=False):
+    def rmmat_element(self, material_number: int, exclusive=False):
         """
         This routine is used to remove elements that are of a specified material value
         (itetclr for elements). Elements with the specified material value are flagged
@@ -5233,7 +5348,7 @@ class MO:
         """
         self.rmmat(material_number, option="element", exclusive=exclusive)
 
-    def rmmat_node(self, material_number, exclusive=False):
+    def rmmat_node(self, material_number: int, exclusive=False):
         """
         This routine is used to remove points that are of a specified material value
         (imt).
