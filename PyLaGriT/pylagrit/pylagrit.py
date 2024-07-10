@@ -5379,7 +5379,7 @@ class Surface:
 class PSet:
     """Pset class"""
 
-    def __init__(self, name, parent):
+    def __init__(self, name: str, parent: PyLaGriT | MO):
         self.name = name
         self._parent = parent
 
@@ -5394,55 +5394,55 @@ class PSet:
     @property
     def xmin(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return float(strarr[4].split()[1])
 
     @property
     def xmax(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return float(strarr[4].split()[2])
 
     @property
     def xlength(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return int(strarr[4].split()[4])
 
     @property
     def ymin(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return float(strarr[5].split()[1])
 
     @property
     def ymax(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return float(strarr[5].split()[2])
 
     @property
     def ylength(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return int(strarr[5].split()[4])
 
     @property
     def zmin(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return float(strarr[6].split()[1])
 
     @property
     def zmax(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return float(strarr[6].split()[2])
 
     @property
     def zlength(self):
         self.minmax_xyz(verbose=False)
-        strarr = self._parent._parent.before.splitlines()
+        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
         return int(strarr[6].split()[4])
 
     def minmax_xyz(self, stride=(1, 0, 0), verbose=True):
@@ -5457,17 +5457,17 @@ class PSet:
         )
         self._parent.sendcmd(cmd, verbose=verbose)
 
-    def minmax(self, attname=None, stride=(1, 0, 0)):
-        self._parent.printatt(
-            attname=attname, stride=stride, pset=self.name, ptype="minmax"
+    def minmax(self, attname: Optional[str] = None, stride=(1, 0, 0)):
+        cast(MO, self._parent).printatt(
+            attname=attname, stride=stride, pset=self, ptype="minmax"
         )
 
     def list(self, attname=None, stride=(1, 0, 0)):
-        self._parent.printatt(
-            attname=attname, stride=stride, pset=self.name, ptype="list"
+        cast(MO, self._parent).printatt(
+            attname=attname, stride=stride, pset=self, ptype="list"
         )
 
-    def setatt(self, attname, value):
+    def setatt(self, attname: str, value: int | float | str):
         cmd = "/".join(
             [
                 "cmo/setatt",
@@ -5487,39 +5487,24 @@ class PSet:
         prange=(-1, 0, 0),
         field=" ",
         inclusive_flag="exclusive",
-        prd_choice=None,
+        prd_choice: Optional[int] = None,
     ):
         prange = [str(v) for v in prange]
-        if prd_choice is None:
-            cmd = "/".join(
-                [
-                    "refine",
-                    refine_option,
-                    field,
-                    interpolation,
-                    refine_type,
-                    "pset get " + self.name,
-                    ",".join(prange),
-                    inclusive_flag,
-                ]
-            )
-        else:
-            cmd = "/".join(
-                [
-                    "refine",
-                    refine_option,
-                    field,
-                    interpolation,
-                    refine_type,
-                    "pset get " + self.name,
-                    ",".join(prange),
-                    inclusive_flag,
-                    "amr " + str(prd_choice),
-                ]
-            )
-        self._parent.sendcmd(cmd)
+        cmd = [
+            "refine",
+            refine_option,
+            field,
+            interpolation,
+            refine_type,
+            "pset get " + self.name,
+            ",".join(prange),
+            inclusive_flag,
+        ]
+        if prd_choice is not None:
+            cmd.append("amr " + str(prd_choice))
+        self._parent.sendcmd("/".join(cmd))
 
-    def eltset(self, membership="inclusive", name=None):
+    def eltset(self, membership="inclusive", name: Optional[str] = None):
         """
         Create eltset from pset
 
@@ -5530,11 +5515,11 @@ class PSet:
         :returns: PyLaGriT EltSet object
         """
         if name is None:
-            name = make_name("e", self._parent.eltset.keys())
+            name = make_name("e", cast(MO, self._parent).eltset.keys())
         cmd = ["eltset", name, membership, "pset", "get", self.name]
         self._parent.sendcmd("/".join(cmd))
-        self._parent.eltset[name] = EltSet(name, self._parent)
-        return self._parent.eltset[name]
+        cast(MO, self._parent).eltset[name] = EltSet(name, self._parent)
+        return cast(MO, self._parent).eltset[name]
 
     def expand(self, membership="inclusive"):
         """
@@ -5547,11 +5532,18 @@ class PSet:
         self._parent.sendcmd("pset/" + self.name + "/delete")
         self = e.pset(name=self.name)
 
-    def interpolate(self, method, attsink, cmosrc, attsrc, interp_function=None):
+    def interpolate(
+        self,
+        method: str,
+        attsink: str,
+        cmosrc: MO,
+        attsrc: str,
+        interp_function: Optional[str] = None,
+    ):
         """
         Interpolate values from attribute attsrc from mesh object cmosrc to current mesh object
         """
-        self._parent.interpolate(
+        cast(MO, self._parent).interpolate(
             method=method,
             attsink=attsink,
             stride=["pset", "get", self.name],
@@ -5576,7 +5568,12 @@ class PSet:
         self.interpolate("map", **minus_self(locals()))
 
     def interpolate_continuous(
-        self, attsink, cmosrc, attsrc, interp_function=None, nearest=None
+        self,
+        attsink,
+        cmosrc,
+        attsrc,
+        interp_function=None,
+        nearest: Optional[str] = None,
     ):
         cmd = [
             "intrp",
@@ -5603,7 +5600,7 @@ class PSet:
     ):
         self.interpolate("default", **minus_self(locals()))
 
-    def dump(self, filerootname, zonetype="zone"):
+    def dump(self, filerootname: str, zonetype="zone"):
         """
         Dump zone file of pset nodes
         :arg filerootname: rootname of files to create, pset name will be added to name
@@ -5657,7 +5654,7 @@ class PSet:
         ]
         self._parent.sendcmd("/".join(cmd))
 
-    def perturb(self, xfactor, yfactor, zfactor):
+    def perturb(self, xfactor: float, yfactor: float, zfactor: float):
         """
         This command moves node coordinates in the following manner.
 
@@ -5677,7 +5674,7 @@ class PSet:
         ]
         self._parent.sendcmd("/".join(cmd))
 
-    def trans(self, xold, xnew):
+    def trans(self, xold: Tuple[float, float, float], xnew: Tuple[float, float, float]):
         """
         Translate points within a pset by the linear translation from (xold, yold, zold) to (xnew, ynew, znew)
 
@@ -5687,14 +5684,11 @@ class PSet:
         :type xnew: tuple
         """
 
-        xold = [str(v) for v in xold]
-        xnew = [str(v) for v in xnew]
-
         cmd = [
             "trans",
             ",".join(["pset", "get", self.name]),
-            ",".join(xold),
-            ",".join(xnew),
+            ",".join([str(v) for v in xold]),
+            ",".join([str(v) for v in xnew]),
         ]
         self._parent.sendcmd("/".join(cmd))
 
@@ -5708,7 +5702,9 @@ class PSet:
             cmd.append(a)
         self._parent.sendcmd("/".join(cmd))
 
-    def pset_attribute(self, attribute, value, comparison="eq", name=None):
+    def pset_attribute(
+        self, attribute: str, value: int, comparison="eq", name: Optional[str] = None
+    ):
         """
         Define PSet from another PSet by attribute
 
