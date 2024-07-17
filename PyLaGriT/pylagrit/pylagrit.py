@@ -1,29 +1,25 @@
+import ctypes
 import os
 import warnings
 import xml.etree.ElementTree as ET
 
 from collections import OrderedDict
+from ctypes.util import find_library
 from itertools import product
 from pathlib import Path
-from subprocess import call
 from typing import Dict, List, Literal, Optional, Tuple, cast
 from xml.dom import minidom
 
 import numpy
 
-from pexpect import spawn
-
-from .utilities import decode_binary, make_name, minus_self
-
-
-catch_errors = True
+from .utilities import dlclose, make_name, minus_self
 
 
 class LaGriT_Warning(Warning):
     pass
 
 
-class PyLaGriT(spawn):
+class PyLaGriT:
     """
     Python lagrit class
 
@@ -44,105 +40,142 @@ class PyLaGriT(spawn):
 
     def __init__(
         self,
-        lagrit_exe: Optional[str] = None,
-        verbose=True,
-        batch=False,
-        batchfile="pylagrit.lgi",
+        lagrit_lib: Optional[str] = None,
+        mode: Literal["slient", "noisy"] = "slient",
+        log_file: str = "lagrit.log",
+        out_file: str = "lagrit.out",
         gmv_exe: Optional[str] = None,
         paraview_exe: Optional[str] = None,
-        timeout=300,
-        **kwargs,
     ):
-        self.verbose = verbose
         self.mo: Dict[str, MO] = {}
         self.pset: Dict[str, PSet] = {}
-        self.batch = batch
         self._check_rc()
 
-        if lagrit_exe is not None:
-            self.lagrit_exe = lagrit_exe
-
-        if self.lagrit_exe is None or not os.path.exists(self.lagrit_exe):
-            raise FileNotFoundError(
-                "Error: LaGriT executable is not defined. Add 'lagrit_exe' "
-                "option to PyLaGriT (e.g., lg = pylagrit.PyLaGriT(lagrit_exe"
-                "=<path/to/lagrit/exe>), or create a pylagritrc file as "
-                "described in the manual."
-            )
+        if lagrit_lib is None:
+            lagrit_lib = find_library("lagrit")
+        self.lagrit_lib = ctypes.CDLL(lagrit_lib)
+        self.lagrit_lib.initlagrit_(
+            mode.encode("utf-8"),
+            log_file.encode("utf-8"),
+            out_file.encode("utf-8"),
+            len(mode),
+            len(log_file),
+            len(out_file),
+        )
 
         if gmv_exe is not None:
             self.gmv_exe = gmv_exe
         if paraview_exe is not None:
             self.paraview_exe = paraview_exe
-        if self.batch:
-            try:
-                self.fh = open(batchfile, "w")
-            except OSError:
-                print("Unable to open " + batchfile)
-                print("Batch mode disabled")
-                self.batch = False
-            else:
-                self.batchfile = batchfile
-                self.fh.write("# PyLaGriT generated LaGriT script\n")
+
+    def close(self):
+        dlclose(self.lagrit_lib._handle)
+
+    def sendcmd(self, cmd: str):
+        err_no = self.lagrit_lib.lg_dotask(cmd.encode("utf-8"))
+
+        # TODO: Error handling
+        # It's always print message to stdout
+        if err_no != 0:
+            warnings.warn(cmd, category=LaGriT_Warning, stacklevel=2)
+
+    def cmo_get_int(self, cmo: "MO | str", attr: str):
+        mo = str(cmo)
+        attr_val = ctypes.c_int64(0)
+        err_no = ctypes.c_int64(0)
+        self.lagrit_lib.fc_cmo_get_int_(
+            mo.encode("utf-8"),
+            attr.encode("utf-8"),
+            ctypes.pointer(attr_val),
+            ctypes.pointer(err_no),
+            len(mo),
+            len(attr),
+        )
+
+        if err_no.value == 0:
+            return attr_val.value
         else:
-            kwargs["timeout"] = timeout
-            super().__init__(self.lagrit_exe, **kwargs)
-            self.expect("Enter a command")
-            if verbose:
-                print(decode_binary(self.before))
+            raise ValueError("attribute not found")
 
-    def run_batch(self):
-        self.fh.write("finish\n")
-        self.fh.close()
-        if self.verbose:
-            call(self.lagrit_exe + " < " + self.batchfile, shell=True)  # noqa: S602
+    def cmo_get_double(self, cmo: "MO | str", attr: str):
+        mo = str(cmo)
+        attr_val = ctypes.c_double(0.0)
+        err_no = ctypes.c_int64(0)
+        self.lagrit_lib.fc_cmo_get_double_(
+            mo.encode("utf-8"),
+            attr.encode("utf-8"),
+            ctypes.pointer(attr_val),
+            ctypes.pointer(err_no),
+            len(mo),
+            len(attr),
+        )
+
+        if err_no.value == 0:
+            return attr_val.value
         else:
-            fout = open("pylagrit.stdout", "w")
-            call(self.lagrit_exe + " < " + self.batchfile, shell=True, stdout=fout)  # noqa: S602
-            fout.close()
+            raise ValueError("attribute not found")
 
-    def sendcmd(self, s: str, verbose=True, expectstr="Enter a command"):
-        if self.batch:
-            self.fh.write(s + "\n")
+    def cmo_get_info(self, cmo: "MO | str", attr: str):
+        mo = str(cmo)
+        attr_data = ctypes.POINTER(ctypes.c_int32)()
+        attr_len = ctypes.c_int32(0)
+        attr_type = ctypes.c_int32(0)
+        err_no = ctypes.c_int32(0)
+        self.lagrit_lib.cmo_get_info_(
+            attr.encode("UTF-8"),
+            mo.encode("UTF-8"),
+            ctypes.pointer(attr_data),
+            ctypes.pointer(attr_len),
+            ctypes.pointer(attr_type),
+            ctypes.pointer(err_no),
+            len(attr),
+            len(mo),
+        )
+
+        if err_no.value == 0:
+            return (attr_data, attr_len.value)
         else:
-            super().sendline(s)
-            self.expect(expectstr)
-            if verbose and self.verbose:
-                print(decode_binary(self.before))
+            raise ValueError("attribute not found")
 
-            if catch_errors:
-                for _line in decode_binary(self.before).split("\n"):
-                    if "ERROR" in _line:
-                        raise Exception(_line)
-                    elif "WARNING" in _line:
-                        warnings.warn(_line, category=LaGriT_Warning, stacklevel=2)
+    def cmo_get_name(self):
+        mo_name = numpy.char.chararray(32)
+        mo_name[:] = b"\0"
+        err_no = ctypes.c_int32(0)
+        self.lagrit_lib.cmo_get_name_(
+            mo_name.ctypes.data_as(ctypes.POINTER(ctypes.c_char_p)),
+            ctypes.pointer(err_no),
+            32,
+        )
 
-    def interact(self, escape_character="^", input_filter=None, output_filter=None):
-        if self.batch:
-            print("Interactive mode unavailable during batch mode")
+        if err_no.value == 0:
+            return mo_name[mo_name != b"\0"].tobytes().decode()
         else:
-            print("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-            print("Entering interactive mode")
-            print(
-                "To return to python terminal, type a '"
-                + escape_character
-                + "' character"
-            )
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
-            print(self.after)
-            super().interact(
-                escape_character=escape_character,
-                input_filter=input_filter,
-                output_filter=output_filter,
-            )
+            raise ValueError("attribute not found")
 
-    def cmo_status(self, cmo: "Optional[MO | str]" = None, brief=False, verbose=True):
+    def cmo_get_mesh_type(self, cmo: "MO | str"):
+        mesh_type = numpy.char.chararray(16)
+        imesh_type = ctypes.c_long(0)
+        err_no = ctypes.c_long(0)
+        mesh_type[:] = b"\0"
+        self.lagrit_lib.fc_cmo_get_mesh_type(
+            str(cmo).encode("utf-8"),
+            mesh_type.ctypes.data_as(ctypes.POINTER(ctypes.c_char_p)),
+            ctypes.pointer(imesh_type),
+            ctypes.pointer(err_no),
+        )
+
+        if err_no.value == 0:
+            return mesh_type[mesh_type != b"\0"].tobytes().decode()
+        else:
+            raise ValueError("attribute not found")
+
+    def cmo_status(self, cmo: "Optional[MO | str]" = None, brief=False):
         cmd = "cmo/status"
         if cmo:
             cmd += "/" + str(cmo)
         if brief:
             cmd += "/brief"
-        self.sendcmd(cmd, verbose=verbose)
+        self.sendcmd(cmd)
 
     def read_mo(
         self,
@@ -228,24 +261,12 @@ class PyLaGriT(spawn):
         self.sendcmd("/".join(cmd))
 
         # If format lagrit, cmo read in will not be set to name
-        if islg and not self.batch:
-            self.sendcmd("cmo/status/brief", verbose=False)
-            # dump lagrit doesn't seem to ever dump multiple mos now???
-            mos = []
-            for line in decode_binary(self.before).splitlines():
-                if "Mesh Object name:" in line:
-                    nm = line.split(":")[1].strip()
-                    self.mo[nm] = MO(nm, self)
-                    mos.append(self.mo[nm])
-            if len(mos) == 1:
-                if name is not None and name != mos[0].name:
-                    self.sendcmd("cmo/copy/" + name + "/" + mos[0].name)
-                    self.sendcmd("cmo/release/" + mos[0].name)
-                return mos[0]
-            elif len(mos) > 1:
-                if name is not None:
-                    print("Multiple mesh objects exist, 'name' option will be ignored")
-                return mos
+        if islg:
+            self.sendcmd("cmo/status/brief")
+            # FIXME: lg file may contains multiple mesh objects
+            name = self.cmo_get_name()
+            self.mo[name] = MO(name, self)
+            return self.mo[name]
         else:
             if name is None:
                 name = make_name("mo", self.mo.keys())
@@ -545,16 +566,16 @@ class PyLaGriT(spawn):
                 "add",
                 "zic",
                 value=-height,
-                stride=["pset", "get", hex_bottom.name],
+                stride=("pset", "get", hex_bottom.name),
                 attsrc="z_new",
             )
-            hexmesh.delatt("z_new")
+            hexmesh.delatt(["z_new"])
         else:
             hexmesh.math(
                 "add",
                 "zic",
                 value=height,
-                stride=["pset", "get", hex_bottom.name],
+                stride=("pset", "get", hex_bottom.name),
                 attsrc="zic",
             )
 
@@ -1361,7 +1382,8 @@ class PyLaGriT(spawn):
 
         """
         mo = self.create(elem_type, name=name)
-        mo.createpts_line(npts, mins, maxs, vc_switch=vc_switch, rz_switch=rz_switch)
+        # FIXME: Fix type for npts
+        mo.createpts_line(npts, mins, maxs, vc_switch=vc_switch, rz_switch=rz_switch)  # type: ignore
         return mo
 
     def gridder(
@@ -1589,11 +1611,9 @@ class MO:
     def __repr__(self):
         return self.name
 
-    def sendcmd(self, cmd: str, verbose=True, expectstr="Enter a command"):
-        self._parent.sendcmd(
-            "cmo select " + self.name, verbose=verbose, expectstr=expectstr
-        )
-        self._parent.sendcmd(cmd, verbose=verbose, expectstr=expectstr)
+    def sendcmd(self, cmd: str):
+        self._parent.sendcmd("cmo select " + self.name)
+        self._parent.sendcmd(cmd)
 
     @property
     def mins(self):
@@ -1605,95 +1625,62 @@ class MO:
 
     @property
     def xmin(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return float(strarr[4].split()[1])
+        return self._parent.cmo_get_double(self, "xmin")
 
     @property
     def xmax(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return float(strarr[4].split()[2])
+        return self._parent.cmo_get_double(self, "xmax")
 
     @property
     def xlength(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return int(strarr[4].split()[4])
+        return self.nnodes
 
     @property
     def ymin(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return float(strarr[5].split()[1])
+        return self._parent.cmo_get_double(self, "ymin")
 
     @property
     def ymax(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return float(strarr[5].split()[2])
+        return self._parent.cmo_get_double(self, "ymax")
 
     @property
     def ylength(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return int(strarr[5].split()[4])
+        return self.nnodes
 
     @property
     def zmin(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return float(strarr[6].split()[1])
+        return self._parent.cmo_get_double(self, "zmin")
 
     @property
     def zmax(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return float(strarr[6].split()[2])
+        return self._parent.cmo_get_double(self, "zmax")
 
     @property
     def zlength(self):
-        self.minmax_xyz(verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return int(strarr[6].split()[4])
+        return self.nnodes
 
     @property
     def nnodes(self):
-        self.status(brief=True, verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return int(strarr[7].split()[4])
+        return self._parent.cmo_get_int(self, "nnodes")
 
     @property
     def nelems(self):
-        self.status(brief=True, verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return int(strarr[7].split()[-1])
+        return self._parent.cmo_get_int(self, "nelements")
 
     @property
     def ndim_geo(self):
-        self.status(brief=True, verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return int(strarr[8].split()[3])
+        return self._parent.cmo_get_int(self, "ndimensions_geom")
 
     @property
     def ndim_topo(self):
-        self.status(brief=True, verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        return int(strarr[9].split()[3])
+        return self._parent.cmo_get_int(self, "ndimensions_topo")
 
     @property
     def elem_type(self):
-        self.status(brief=True, verbose=False)
-        strarr = cast(bytes, self._parent.before).splitlines()
-        etype = decode_binary(strarr[8].split()[7])
-        if etype == "tri":
-            if self.ndim_geo == 2:
-                etype = "triplane"
-        return etype
+        return self._parent.cmo_get_mesh_type(self)
 
-    def status(self, brief=False, verbose=True):
-        print(self.name)
-        self._parent.cmo_status(self.name, brief=brief, verbose=verbose)
+    def status(self, brief=False):
+        self._parent.cmo_status(self.name, brief=brief)
 
     def select(self):
         self.sendcmd("cmo/select/" + self.name)
@@ -1928,9 +1915,9 @@ class MO:
     def minmax(self, attname: Optional[str] = None, stride=(1, 0, 0)):
         self.printatt(attname=attname, stride=stride, ptype="minmax")
 
-    def minmax_xyz(self, stride=(1, 0, 0), verbose=True):
+    def minmax_xyz(self):
         cmd = "/".join(["cmo/printatt", self.name, "-xyz-", "minmax"])
-        self.sendcmd(cmd, verbose=verbose)
+        self.sendcmd(cmd)
 
     def list(
         self,
@@ -2000,71 +1987,37 @@ class MO:
 
         Information is that found in cmo/status/MO
         """
-        import contextlib
 
-        @contextlib.contextmanager
-        def capture():
-            import sys
+        atts = {
+            "nodes": self.nnodes,
+            "elmeents": self.nelems,
+            "dimensions": self.ndim_geo,
+            "type": self.elem_type,
+            "dimensions_topology": self.ndim_topo,
+            "attributes": {},
+        }
 
-            from io import StringIO
+        (attr_ptr, attr_len) = self._parent.cmo_get_info(self, "cmo_attlist")
+        attr_data = (
+            numpy.ctypeslib.as_array(attr_ptr, shape=(attr_len * 8,)).tobytes().decode()
+        )
 
-            oldout, olderr = sys.stdout, sys.stderr
-            try:
-                out = [StringIO(), StringIO()]
-                sys.stdout, sys.stderr = out
-                yield out
-            finally:
-                sys.stdout, sys.stderr = oldout, olderr
-                # FIXME: out is possibly unbound
-                out[0] = out[0].getvalue()  # type: ignore
-                out[1] = out[1].getvalue()  # type: ignore
-
-        _temp = self._parent.verbose
-        self._parent.verbose = True
-        with capture() as out:
-            self.sendcmd("cmo/status/" + self.name, verbose=True)
-        self._parent.verbose = _temp
-
-        atts = {}
-        in_attributes_section = False
-
-        for line in cast(str, out[0]).replace("\r", "").split("\n"):
-            lline = line.strip().lower()
-            split = line.strip().split()
-
-            if not in_attributes_section:
-                if "number of nodes" in lline:
-                    atts["nodes"] = int(split[4])
-                if "number of elements" in lline:
-                    atts["elements"] = int(split[-1])
-                if "dimensions geometry" in lline:
-                    atts["dimensions"] = int(split[3])
-                if "element type" in lline:
-                    atts["type"] = split[-1]
-                if "dimensions topology" in lline:
-                    atts["dimensions_topology"] = int(split[3])
-                if "name" and "type" and "rank" and "length" in lline:
-                    in_attributes_section = True
-                    atts["attributes"] = {}
-
-            else:
-                try:
-                    name, atype, rank, length, inter, persi, io, value = split[1:]
-                except ValueError:
-                    continue
-
-                atts["attributes"][name] = {}
-                atts["attributes"][name]["type"] = atype
-                atts["attributes"][name]["rank"] = rank
-                atts["attributes"][name]["length"] = length
-                atts["attributes"][name]["inter"] = inter
-                atts["attributes"][name]["persi"] = persi
-                atts["attributes"][name]["io"] = io
-
-                try:
-                    atts["attributes"][name]["value"] = float(value)
-                except ValueError:
-                    atts["attributes"][name]["value"] = value
+        ncols = 7
+        buflen = 32
+        for attr in [
+            attr_data[i : i + (ncols * buflen)].split()
+            for i in range(0, len(attr_data), ncols * buflen)
+        ]:
+            name = attr[0]
+            atts["attributes"][name] = {}
+            atts["attributes"][name]["type"] = attr[1]
+            atts["attributes"][name]["rank"] = attr[2]
+            atts["attributes"][name]["length"] = attr[3]
+            atts["attributes"][name]["inter"] = attr[4]
+            atts["attributes"][name]["persi"] = attr[5]
+            atts["attributes"][name]["io"] = attr[6]
+            # TODO: implement default value field for attribute
+            atts["attributes"][name]["value"] = None
 
         return atts
 
@@ -3771,8 +3724,6 @@ class MO:
             rz_value,
             connect=connect,
         )
-        if self._parent.verbose:
-            self.minmax_xyz()
 
     def createpts_rtz(
         self,
@@ -4691,23 +4642,14 @@ class MO:
             mat_num = ["1"] * len(filelist)
         else:
             mat_num = [str(m) for m in matids]
-        cmd = ["stack/layers", file_type]
+        cmd = ["stack", "layers", file_type]
         if xy_subset is not None:
             cmd.append(",".join([str(v) for v in xy_subset]))
 
-        cmd.append(" &")
-        self.sendcmd("/".join(cmd), expectstr="\r\n")
-
-        self._parent.sendcmd(
-            " ".join([filelist[0], mat_num[0], "/ &"]), expectstr="\r\n"
-        )
-        for file, matid, n_refine in zip(
-            filelist[1:-1], mat_num[1:-1], refine_num[0:-1]
-        ):
-            self._parent.sendcmd(
-                " ".join([file, matid, n_refine, "/ &"]), expectstr="\r\n"
-            )
-        cmd = [" ".join([filelist[-1], mat_num[-1], refine_num[-1]])]
+        cmd.append(f"{filelist[0]} {mat_num[0]}")
+        for file, matid, n_refine in zip(filelist[1:], mat_num[1:], refine_num):
+            cmd.append(f"{file} {matid} {n_refine}")
+        cmd.append(f"{filelist[-1]} {mat_num[-1]} {refine_num[-1]}")
 
         if flip_opt is True:
             cmd.append("flip")
@@ -4720,8 +4662,8 @@ class MO:
         if dpinchout_opt is not None:
             cmd.append(f"dpinch {dpinchout_opt[0]}")
             cmd.append(f"dmin {dpinchout_opt[1]}")
-        if not len(cmd) == 0:
-            self._parent.sendcmd("/".join(cmd))
+
+        self._parent.sendcmd("/".join(cmd))
 
     def stack_fill(self, name: Optional[str] = None):
         if name is None:
@@ -4735,7 +4677,7 @@ class MO:
         operation: str,
         attsink: str,
         value: Optional[float] = None,
-        stride: Tuple[int, int, int] = (1, 0, 0),
+        stride: Tuple[int, int, int] | Tuple[str, str, str] = (1, 0, 0),
         cmosrc: Optional["MO"] = None,
         attsrc: Optional[str] = None,
     ):
@@ -5393,69 +5335,60 @@ class PSet:
 
     @property
     def xmin(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return float(strarr[4].split()[1])
+        # TODO:
+        raise NotImplementedError()
 
     @property
     def xmax(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return float(strarr[4].split()[2])
+        # TODO:
+        raise NotImplementedError()
 
     @property
     def xlength(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return int(strarr[4].split()[4])
+        # TODO:
+        raise NotImplementedError()
 
     @property
     def ymin(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return float(strarr[5].split()[1])
+        # TODO:
+        raise NotImplementedError()
 
     @property
     def ymax(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return float(strarr[5].split()[2])
+        # TODO:
+        raise NotImplementedError()
 
     @property
     def ylength(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return int(strarr[5].split()[4])
+        # TODO:
+        raise NotImplementedError()
 
     @property
     def zmin(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return float(strarr[6].split()[1])
+        # TODO:
+        raise NotImplementedError()
 
     @property
     def zmax(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return float(strarr[6].split()[2])
+        # TODO:
+        raise NotImplementedError()
 
     @property
     def zlength(self):
-        self.minmax_xyz(verbose=False)
-        strarr = decode_binary(cast(MO, self._parent)._parent.before).splitlines()
-        return int(strarr[6].split()[4])
+        # TODO:
+        raise NotImplementedError()
 
-    def minmax_xyz(self, stride=(1, 0, 0), verbose=True):
+    def minmax_xyz(self):
         cmd = "/".join(
             [
                 "cmo/printatt",
-                self._parent.name,
+                cast(MO, self._parent).name,
                 "-xyz-",
                 "minmax",
                 "pset,get," + self.name,
             ]
         )
-        self._parent.sendcmd(cmd, verbose=verbose)
+        self._parent.sendcmd(cmd)
 
     def minmax(self, attname: Optional[str] = None, stride=(1, 0, 0)):
         cast(MO, self._parent).printatt(
@@ -5471,7 +5404,7 @@ class PSet:
         cmd = "/".join(
             [
                 "cmo/setatt",
-                self._parent.name,
+                cast(MO, self._parent).name,
                 attname,
                 "pset get " + self.name,
                 str(value),
@@ -5518,7 +5451,7 @@ class PSet:
             name = make_name("e", cast(MO, self._parent).eltset.keys())
         cmd = ["eltset", name, membership, "pset", "get", self.name]
         self._parent.sendcmd("/".join(cmd))
-        cast(MO, self._parent).eltset[name] = EltSet(name, self._parent)
+        cast(MO, self._parent).eltset[name] = EltSet(name, cast(MO, self._parent))
         return cast(MO, self._parent).eltset[name]
 
     def expand(self, membership="inclusive"):

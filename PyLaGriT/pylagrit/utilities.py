@@ -1,16 +1,10 @@
+import ctypes
 import os
+import sys
 
 from datetime import datetime
 
 import numpy as np
-
-
-# Universal-safe function for ensuring string integrity
-def decode_binary(b) -> str:
-    if isinstance(b, bytes):
-        return b.decode("ascii")
-    else:
-        return b
 
 
 def make_name(base, names):
@@ -253,3 +247,48 @@ def spherical_volumes(node_locations):
     volumes = np.diff(spheres)
     assert np.all(volumes > 0), "ERROR: Negative volumes are not good."  # noqa: S101
     return volumes
+
+
+#
+# dlclose: close loaded dynamic library
+# ref: https://stackoverflow.com/a/66971833
+#
+if sys.platform.startswith("win32"):
+    dlclose = ctypes.windll.kernel32.FreeLibrary  # type: ignore
+
+elif sys.platform.startswith("darwin"):
+    try:
+        try:
+            # macOS 11 (Big Sur). Possibly also later macOS 10s.
+            stdlib = ctypes.CDLL("libc.dylib")
+        except OSError:
+            stdlib = ctypes.CDLL("libSystem")
+    except OSError:
+        # Older macOSs. Not only is the name inconsistent but it's
+        # not even in PATH.
+        stdlib = ctypes.CDLL("/usr/lib/system/libsystem_c.dylib")
+    dlclose = stdlib.dlclose
+
+elif sys.platform.startswith("linux"):
+    try:
+        stdlib = ctypes.CDLL("")
+    except OSError:
+        # Alpine Linux.
+        stdlib = ctypes.CDLL("libc.so")
+    dlclose = stdlib.dlclose
+
+elif sys.platform.startswith("cygwin"):
+    stdlib = ctypes.CDLL("cygwin1.dll")
+    dlclose = stdlib.dlclose
+
+elif sys.platform.startswith("freebsd"):
+    # FreeBSD uses `/usr/lib/libc.so.7` where `7` is another version number.
+    # It is not in PATH but using its name instead of its path is somehow the
+    # only way to open it. The name must include the .so.7 suffix.
+    stdlib = ctypes.CDLL("libc.so.7")
+    dlclose = stdlib.close
+
+else:
+    raise NotImplementedError("Unknown platform.")
+
+dlclose.argtypes = [ctypes.c_void_p]
