@@ -9,7 +9,6 @@
 #
 # Not supported yet but available:
 # -D CMAKE_INSTALL_PREFIX (default /usr/local if make install)
-# -D LaGriT_BUILD_STATIC=ON (default .a, use OFF for .so etc)
 #
 # Long version with explicit paths to build lagrit with Exodus 
 # This file is useful for debugging cmake with Exodus
@@ -25,7 +24,6 @@ project(LaGriT VERSION 3.3.4
                DESCRIPTION "LaGriT Meshing Utilities"
                LANGUAGES Fortran CXX C)
 
-option(LAGRIT_BUILD_STATIC "Compile as a static (fat) executable." ON)
 option(LAGRIT_BUILD_EXODUS "Build with Exodus." OFF)
 
 # Set Directories for lagrit compile and build 
@@ -40,7 +38,6 @@ message(STATUS "==========================================")
 message(STATUS "============Configuring LaGriT============")
 message(STATUS "===================v${PROJECT_VERSION}=================")
 
-message(STATUS "Compile LaGriT as a static binary = ${LAGRIT_BUILD_STATIC}")
 message(STATUS "Compile LaGriT with ExodusII = ${LAGRIT_BUILD_EXODUS}")
 
 # Add Third Party Libraries here and add all to TPL_LIBRARIES
@@ -143,12 +140,7 @@ include("${CMAKE_SOURCE_DIR}/cmake/DetectBitSize.cmake")
 include("${CMAKE_SOURCE_DIR}/cmake/CompilerFlags-Fortran.cmake")
 include("${CMAKE_SOURCE_DIR}/cmake/CompilerFlags-C.cmake")
 
-if (LAGRIT_BUILD_STATIC)
-  set(LIBLAGRIT_BUILD_TYPE "STATIC")
-else()
-  set(LIBLAGRIT_BUILD_TYPE "SHARED")
-  set(BUILD_SHARED_LIBS TRUE)
-endif()
+set(BUILD_SHARED_LIBS TRUE)
 
 # cmake variable to set DEBUG or RELEASE on command line 
 if (CMAKE_BUILD_TYPE)
@@ -249,15 +241,35 @@ set_source_files_properties(
 
 # Compile LaGriT routines as a library
 add_library(
-    liblagrit
-    ${LIBLAGRIT_BUILD_TYPE} # STATIC or SHARED
+    objlib
+    OBJECT
     ${SRC_UTIL_FILES}
     ${SRC_CORE_FILES}
 )
 
+add_library(
+    liblagrit_static
+    STATIC
+    $<TARGET_OBJECTS:objlib>
+)
+
+add_library(
+    liblagrit_shared
+    SHARED
+    $<TARGET_OBJECTS:objlib>
+)
+
 # Set the shared library version
 set_target_properties(
-  liblagrit
+  liblagrit_static
+  PROPERTIES
+  OUTPUT_NAME "lagrit"
+  VERSION "${PROJECT_VERSION}"
+  SOVERSION "${PROJECT_VERSION_MAJOR}"
+)
+
+set_target_properties(
+  liblagrit_shared
   PROPERTIES
   OUTPUT_NAME "lagrit"
   VERSION "${PROJECT_VERSION}"
@@ -283,18 +295,16 @@ if (WIN32)
   set_target_properties(lagrit PROPERTIES SUFFIX ".exe")
 endif()
 
-if (LAGRIT_BUILD_STATIC)
-  set_target_properties(lagrit PROPERTIES LINK_SEARCH_START_STATIC 1)
-  set_target_properties(lagrit PROPERTIES LINK_SEARCH_END_STATIC 1)
+set_target_properties(lagrit PROPERTIES LINK_SEARCH_START_STATIC 1)
+set_target_properties(lagrit PROPERTIES LINK_SEARCH_END_STATIC 1)
 
-  if(WIN32)
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .lib .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  else()
-    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
-    set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
-  endif()
-
+if(WIN32)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .lib .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+else()
+  set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 endif()
+
 # end static build options
 
 target_include_directories(
@@ -303,7 +313,12 @@ target_include_directories(
 )
 
 target_link_libraries(lagrit
-   PRIVATE liblagrit           # liblagrit.[dylib|so|a|dll]
+   PRIVATE liblagrit_static           # liblagrit.[dylib|so|a|dll]
+   PUBLIC ${TPL_LINK_LIBS}     # Exodus / NetCDF / HDF5 / ZLIB
+)
+
+target_link_libraries(lagrit
+   PRIVATE liblagrit_shared           # liblagrit.[dylib|so|a|dll]
    PUBLIC ${TPL_LINK_LIBS}     # Exodus / NetCDF / HDF5 / ZLIB
 )
 
@@ -327,7 +342,11 @@ install(
 
 # Install liblagrit to ${CMAKE_INSTALL_PATH}/lib/
 install(
-    TARGETS liblagrit
+    TARGETS liblagrit_static
     DESTINATION "lib"
 )
 
+install(
+    TARGETS liblagrit_shared
+    DESTINATION "lib"
+)
