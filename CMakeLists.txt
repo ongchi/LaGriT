@@ -103,7 +103,7 @@ endif()
 # trick cmake to add exodus libs correctly for linking
 # nc-config --static should pick up all link FLAGS from netcdf 
 # -lcurl needed for linking netcdf libs on linux 
-set(TPL_LINK_LIBS "-L${EXODUS_ROOT}/lib -lexodus_for -lexodus -lnetcdf -lhdf5_hl -lcurl -lhdf5 -lz -ldl -static-libgfortran -static-libgcc")
+set(TPL_LINK_LIBS "-L${EXODUS_ROOT}/lib -lexodus_for -lexodus -lnetcdf -lhdf5_hl -lcurl -lhdf5 -lz -ldl -static-libgfortran")
 
 message(STATUS "-----Done Exodus-----")
 
@@ -276,6 +276,12 @@ set_target_properties(
   SOVERSION "${PROJECT_VERSION_MAJOR}"
 )
 
+if (WIN32)
+  set_target_properties(
+    liblagrit_shared PROPERTIES LINK_FLAGS "/WHOLEARCHIVE"
+  )
+endif ()
+
 # Compile the main LaGriT binary
 add_executable(
   lagrit
@@ -301,7 +307,7 @@ set_target_properties(lagrit PROPERTIES LINK_SEARCH_END_STATIC 1)
 if(WIN32)
   set(CMAKE_FIND_LIBRARY_SUFFIXES .lib .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 else()
-  set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
+  set(CMAKE_EXE_LINKER_FLAGS "-static-libstdc++")
   set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
 endif()
 
@@ -313,14 +319,18 @@ target_include_directories(
 )
 
 target_link_libraries(lagrit
-   PRIVATE liblagrit_static           # liblagrit.[dylib|so|a|dll]
+   PRIVATE liblagrit_static    # liblagrit.a
    PUBLIC ${TPL_LINK_LIBS}     # Exodus / NetCDF / HDF5 / ZLIB
 )
 
-target_link_libraries(lagrit
-   PRIVATE liblagrit_shared           # liblagrit.[dylib|so|a|dll]
-   PUBLIC ${TPL_LINK_LIBS}     # Exodus / NetCDF / HDF5 / ZLIB
-)
+if (APPLE)
+  set(LINK_FLAGS "-Wl,-all_load")
+  set(UNDO_FLAGS "-Wl,-noall_load")
+else ()
+  set(LINK_FLAGS "-Wl,--whole-archive")
+  set(UNDO_FLAGS "-Wl,--no-whole-archive")
+endif ()
+target_link_libraries(liblagrit_shared ${TPL_LINK_LIBS} ${UNDO_FLAGS})
 
 # this produces errors 
 #make[2]: *** No rule to make target '../TPLs/seacas/lib/libexoIIv2for.a', needed by 'lagrit'.  Stop.
