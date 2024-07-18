@@ -3229,20 +3229,16 @@ class MO:
             >>> fs = m.create_boundary_facesets(base_name="faceset_bounds")
             >>> m.dump_exo("cube.exo", facesets=fs.values())
         """
-        cmd = "/".join(["dump/exo", filename, self.name])
+        cmd = ["dump", "exo", filename, self.name]
         if psets:
-            cmd = "/".join([cmd, "psets"])
-        else:
-            cmd = "/".join([cmd, " "])
+            cmd.append("psets")
         if eltsets:
-            cmd = "/".join([cmd, "eltsets"])
-        else:
-            cmd = "/".join([cmd, " "])
+            cmd.append("eltsets")
         if facesets is not None:
-            cmd = "/".join([cmd, "facesets"])
-            for fc in facesets:
-                cmd += " &\n" + fc.filename
-        self.sendcmd(cmd)
+            cmd.append("facesets")
+            cmd.extend([fc.filename for fc in facesets])
+
+        self.sendcmd("/".join(cmd))
 
     def dump_gmv(self, filename: str, format="binary"):
         self.dump(filename, "gmv", format)
@@ -4009,24 +4005,24 @@ class MO:
         quadpts = [n for n in nnodes if n != 1]
         assert len(quadpts) == 2, "nnodes must have one value == 1 and two values > 1"  # noqa: S101
 
-        c = ""
+        cmd = ["quadxy"]
         for v in pts:
             assert len(v) == 3, "vectors must be of length 3 (x,y,z)"  # noqa: S101
-            c += "/&\n" + ",".join(list(map(str, v)))
-        self.sendcmd("quadxy/%d,%d%s" % (quadpts[0], quadpts[1], c))
+            cmd.append(",".join(list(map(str, v))))
+
+        self.sendcmd("/".join(cmd))
 
         if connect:
-            cmd = "/".join(
-                [
-                    "createpts",
-                    "brick",
-                    "xyz",
-                    ",".join(map(str, nnodes)),
-                    "1,0,0",
-                    "connect",
-                ]
-            )
-            self.sendcmd(cmd)
+            cmd = [
+                "createpts",
+                "brick",
+                "xyz",
+                ",".join(map(str, nnodes)),
+                "1,0,0",
+                "connect",
+            ]
+
+            self.sendcmd("/".join(cmd))
 
     def quadxyz(
         self,
@@ -4085,24 +4081,24 @@ class MO:
         self.select()
         assert len(nnodes) == 3, "nnodes must contain three values"  # noqa: S101
         assert len(pts) == 8, "pts must contain eight sets of points"  # noqa: S101
-        cmd = "/".join(["quadxyz", ",".join(map(str, nnodes))])
+        cmd = ["quadxyz", ",".join(map(str, nnodes))]
         for v in pts:
             assert len(v) == 3, "each entry in pts must contain 3 (x,y,z) values"  # noqa: S101
-            cmd += "/ &\n" + ",".join(list(map(str, v)))
-        self.sendcmd(cmd)
+            cmd.append(",".join(list(map(str, v))))
+
+        self.sendcmd("/".join(cmd))
 
         if connect:
-            cmd = "/".join(
-                [
-                    "createpts",
-                    "brick",
-                    "xyz",
-                    ",".join(map(str, nnodes)),
-                    "1,0,0",
-                    "connect",
-                ]
-            )
-            self.sendcmd(cmd)
+            cmd = [
+                "createpts",
+                "brick",
+                "xyz",
+                ",".join(map(str, nnodes)),
+                "1,0,0",
+                "connect",
+            ]
+
+            self.sendcmd("/".join(cmd))
 
     def rzbrick(
         self,
@@ -4801,7 +4797,7 @@ class MO:
 
     def regnpts(
         self,
-        geom: str,
+        geom: Literal["xyz"] | Literal["rtz"] | Literal["rtp"],
         ray_points: Tuple[  # xyz
             Tuple[float, float, float],
             Tuple[float, float, float],
@@ -4814,48 +4810,43 @@ class MO:
         stride=(1, 0, 0),
         irratio=0,
         rrz=0,
-        maxpenetr=None,
+        maxpenetr=False,
     ):
         if isinstance(stride, PSet):
             stride = "pset get " + stride.name
         else:
             stride = ",".join([str(v) for v in stride])
-        end = str(irratio) + " " + str(rrz)
-        if maxpenetr is not None:
-            end = end + "/" + str(maxpenetr)
-        ptdist = str(ptdist)
+
+        cmd = ["regnpts", region.name, ptdist, stride, geom]
+
         if geom == "xyz":
             assert len(ray_points) == 3, "ray_points must contain three sets of points"  # noqa: S101
-            pts = ""
             for p in ray_points:
                 assert (  # noqa: S101
                     len(p) == 3
                 ), "each entry in ray_points must contain 3 (x,y,z) values"
-                pts += ",".join(list(map(str, p))) + "/"
+                cmd.append(",".join(list(map(str, p))))
         elif geom == "rtz":
             assert len(ray_points) == 2, "ray_points must contain two sets of points"  # noqa: S101
-            pts = ""
             for p in ray_points:
                 assert (  # noqa: S101
                     len(p) == 3
                 ), "each entry in ray_points must contain 3 (x,y,z) values"
-                pts += " &\n" + ",".join(list(map(str, p))) + "/"
+                cmd.append(",".join(list(map(str, p))))
         elif geom == "rtp":
-            assert len(ray_points) == 2, "ray_points must contain one set of points"  # noqa: S101
-            pts = ""
+            assert len(ray_points) == 1, "ray_points must contain one set of points"  # noqa: S101
             for p in ray_points:
                 assert (  # noqa: S101
                     len(p) == 3
                 ), "each entry in ray_points must contain 3 (x,y,z) values"
-                pts += " &\n" + ",".join(list(map(str, p))) + "/"
-        else:
-            print("Error: geom must be of type xyz rtz or rtp")
-            return
-        name = region.name
-        cmd = "/".join(["regnpts", name, ptdist, stride, geom, pts])
-        cmd += end
-        print(cmd)
-        self.sendcmd(cmd)
+                cmd.append(",".join(list(map(str, p))))
+
+        cmd.append(str(irratio))
+        cmd.append(str(rrz))
+        if maxpenetr:
+            cmd.append("maxpenetr")
+
+        self.sendcmd("/".join(cmd))
 
     def regnpts_xyz(
         self,
@@ -5138,18 +5129,16 @@ class MO:
     ):
         if name is None:
             name = make_name("s", self.surfaces.keys())
-        cmd = "/".join(
-            [
-                "surface",
-                name,
-                ibtype,
-                "plane",
-                " &\n" + ",".join([str(v) for v in coord1]),
-                " &\n" + ",".join([str(v) for v in coord2]),
-                " &\n" + ",".join([str(v) for v in coord3]),
-            ]
-        )
-        self.sendcmd(cmd)
+        cmd = [
+            "surface",
+            name,
+            ibtype,
+            "plane",
+            ",".join(map(str, coord1)),
+            ",".join(map(str, coord2)),
+            ",".join(map(str, coord3)),
+        ]
+        self.sendcmd("/".join(cmd))
         self.surfaces[name] = Surface(name, self)
         return self.surfaces[name]
 
