@@ -146,7 +146,12 @@ class PyLaGriT:
         else:
             raise ValueError("attribute not found")
 
-    def cmo_get_info(self, cmo: "MO | str", attr: str):
+    def cmo_get_info(
+        self,
+        cmo: "MO | str",
+        attr: str,
+        dtype: type,
+    ):
         mo = str(cmo)
         attr_data = ctypes.POINTER(ctypes.c_int32)()
         attr_len = ctypes.c_int32(0)
@@ -164,7 +169,21 @@ class PyLaGriT:
         )
 
         if err_no.value == 0:
-            return (attr_data, attr_len.value)
+            # NOTE: cmo_get_info return a pointer of int32, but the actual data returned is a 64-bit pointer.
+            if dtype == numpy.int64 or dtype == numpy.float64:
+                sz = (
+                    attr_len.value
+                    * numpy.dtype(dtype).itemsize
+                    // numpy.dtype(ctypes.c_int32).itemsize
+                )
+                return numpy.ctypeslib.as_array(attr_data, shape=(sz,)).view(dtype)
+            elif dtype == numpy.string_:
+                sz = attr_len.value * numpy.dtype(int).itemsize
+                return numpy.ctypeslib.as_array(
+                    attr_data, shape=(int(attr_len.value * 8),)
+                )
+            else:
+                raise ValueError("unsupported type")
         else:
             raise ValueError("attribute not found")
 
@@ -1646,6 +1665,9 @@ class MO:
         self._parent.sendcmd("cmo select " + self.name)
         self._parent.sendcmd(cmd)
 
+    def cmo_get_info(self, attr: str, dtype: type):
+        return self._parent.cmo_get_info(self, attr, dtype)
+
     @property
     def mins(self):
         return numpy.array([self.xmin, self.ymin, self.zmin])
@@ -1712,39 +1734,22 @@ class MO:
 
     @property
     def points(self):
-        # NOTE: cmo_get_info return a pointer of int32, but the actual data turned is a 64-bit pointer.
-        ptr_x, len_x = self._parent.cmo_get_info(self, "xic")
-        x = numpy.ctypeslib.as_array(ptr_x, shape=(len_x * 2,)).view(numpy.float64)
-        ptr_y, len_y = self._parent.cmo_get_info(self, "yic")
-        y = numpy.ctypeslib.as_array(ptr_y, shape=(len_y * 2,)).view(numpy.float64)
-        ptr_z, len_z = self._parent.cmo_get_info(self, "zic")
-        z = numpy.ctypeslib.as_array(ptr_z, shape=(len_z * 2,)).view(numpy.float64)
+        x = self.cmo_get_info("xic", numpy.float64)
+        y = self.cmo_get_info("yic", numpy.float64)
+        z = self.cmo_get_info("zic", numpy.float64)
 
         return numpy.c_[x, y, z]
 
     @property
     def celltypes(self):
-        # NOTE: cmo_get_info return a pointer of int32, but the actual data turned is a 64-bit pointer.
-        ptr_type, len_type = self._parent.cmo_get_info(self, "itettyp")
-        el_type = numpy.ctypeslib.as_array(ptr_type, shape=(len_type * 2,)).view(
-            numpy.int64
-        )
+        el_type = self.cmo_get_info("itettyp", numpy.int64)
+
         return VTK_CELL_TYPE_MAP[el_type - 1]
 
     @property
     def cells(self):
-        # NOTE: cmo_get_info return a pointer of int32, but the actual data turned is a 64-bit pointer.
-        ptr_offset, len_offset = self._parent.cmo_get_info(self, "itetoff")
-        el_offset = numpy.ctypeslib.as_array(ptr_offset, shape=(len_offset * 2,)).view(
-            numpy.int64
-        )
-        ptr_nodes, len_nodes = self._parent.cmo_get_info(self, "itet")
-        el_nodes = (
-            numpy.ctypeslib.as_array(ptr_nodes, shape=(len_nodes * 2,)).view(
-                numpy.int64
-            )
-            - 1
-        )
+        el_offset = self.cmo_get_info("itetoff", numpy.int64)
+        el_nodes = self.cmo_get_info("itet", numpy.int64) - 1
 
         celltypes = self.celltypes
         n_nodes = numpy.array([CELL_N_NODES[t] for t in celltypes])
@@ -1765,6 +1770,9 @@ class MO:
         return cells
 
     def to_pyvista(self):
+        """
+        Convert mesh object to pyvista unstructured grid
+        """
         try:
             import pyvista as pv
         except ImportError:
@@ -2093,10 +2101,7 @@ class MO:
             "attributes": {},
         }
 
-        (attr_ptr, attr_len) = self._parent.cmo_get_info(self, "cmo_attlist")
-        attr_data = (
-            numpy.ctypeslib.as_array(attr_ptr, shape=(attr_len * 8,)).tobytes().decode()
-        )
+        attr_data = self.cmo_get_info("cmo_attlist", numpy.string_).tobytes().decode()
 
         ncols = 7
         buflen = 32
