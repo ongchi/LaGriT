@@ -1778,7 +1778,30 @@ class MO:
         except ImportError:
             raise ImportError("PyVista is not installed")  # noqa: B904
 
-        return pv.UnstructuredGrid(self.cells, self.celltypes, self.points)
+        mesh = pv.UnstructuredGrid(self.cells, self.celltypes, self.points)
+
+        info = self.information()
+        export_attrs = [
+            attr
+            for attr in info["attributes"].items()
+            # write only avs attributes
+            if "a" in attr[1]["io"] and attr[0] != "-def-"
+        ]
+
+        type_map = {"VDOUBLE": numpy.float64, "VINT": numpy.int64}
+
+        for attr in export_attrs:
+            attr_name = attr[0]
+            attr_type = type_map[attr[1]["type"]]
+            length = attr[1]["length"]
+            attr_data = self.cmo_get_info(attr_name, attr_type)
+
+            if length == "nnodes":
+                mesh.point_data[attr[0]] = attr_data
+            elif length == "nelements":
+                mesh.cell_data[attr[0]] = attr_data
+
+        return mesh
 
     def plot(self, show_edges=True, show_bounds=True, **kwargs):
         self.to_pyvista().plot(show_edges=show_edges, show_bounds=show_bounds, **kwargs)
