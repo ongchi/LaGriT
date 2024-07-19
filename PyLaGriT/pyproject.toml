@@ -7,7 +7,7 @@ name = "pylagrit"
 version = "1.0.1"
 description = "Python interface for LaGriT"
 authors = [{ name = "Dylan R. Harp", email = "dharp@lanl.gov" }]
-dependencies = ["numpy", "pexpect>=4.6.0"]
+dependencies = ["numpy", "pexpect>=4.6.0", "pyvista"]
 license = { text = "LGPL" }
 requires-python = ">=3.10"
 

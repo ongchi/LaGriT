@@ -12,7 +12,38 @@ from xml.dom import minidom
 
 import numpy
 
+from pyvista import CellType
+
 from .utilities import dlclose, make_name, minus_self
+
+
+# Cell type mapping to VTK cell
+VTK_CELL_TYPE_MAP = numpy.array(
+    [
+        CellType.VERTEX,
+        CellType.LINE,
+        CellType.TRIANGLE,
+        CellType.QUAD,
+        CellType.TETRA,
+        CellType.PYRAMID,
+        CellType.WEDGE,  # prism, VTK order = [0, 2, 1, 3, 5, 4]
+        CellType.HEXAHEDRON,
+        None,  # hybrid, no corresponding type
+        None,  # polygon, no corresponding type
+    ]
+)
+# Definition of number of nodes for element type
+CELL_N_NODES = {
+    CellType.VERTEX: 1,
+    CellType.LINE: 2,
+    CellType.TRIANGLE: 3,
+    CellType.QUAD: 4,
+    CellType.TETRA: 4,
+    CellType.PYRAMID: 5,
+    CellType.WEDGE: 6,
+    CellType.HEXAHEDRON: 8,
+    None: 10,
+}
 
 
 class LaGriT_Warning(Warning):
@@ -1678,6 +1709,71 @@ class MO:
     @property
     def elem_type(self):
         return self._parent.cmo_get_mesh_type(self)
+
+    @property
+    def points(self):
+        # NOTE: cmo_get_info return a pointer of int32, but the actual data turned is a 64-bit pointer.
+        ptr_x, len_x = self._parent.cmo_get_info(self, "xic")
+        x = numpy.ctypeslib.as_array(ptr_x, shape=(len_x * 2,)).view(numpy.float64)
+        ptr_y, len_y = self._parent.cmo_get_info(self, "yic")
+        y = numpy.ctypeslib.as_array(ptr_y, shape=(len_y * 2,)).view(numpy.float64)
+        ptr_z, len_z = self._parent.cmo_get_info(self, "zic")
+        z = numpy.ctypeslib.as_array(ptr_z, shape=(len_z * 2,)).view(numpy.float64)
+
+        return numpy.c_[x, y, z]
+
+    @property
+    def celltypes(self):
+        # NOTE: cmo_get_info return a pointer of int32, but the actual data turned is a 64-bit pointer.
+        ptr_type, len_type = self._parent.cmo_get_info(self, "itettyp")
+        el_type = numpy.ctypeslib.as_array(ptr_type, shape=(len_type * 2,)).view(
+            numpy.int64
+        )
+        return VTK_CELL_TYPE_MAP[el_type - 1]
+
+    @property
+    def cells(self):
+        # NOTE: cmo_get_info return a pointer of int32, but the actual data turned is a 64-bit pointer.
+        ptr_offset, len_offset = self._parent.cmo_get_info(self, "itetoff")
+        el_offset = numpy.ctypeslib.as_array(ptr_offset, shape=(len_offset * 2,)).view(
+            numpy.int64
+        )
+        ptr_nodes, len_nodes = self._parent.cmo_get_info(self, "itet")
+        el_nodes = (
+            numpy.ctypeslib.as_array(ptr_nodes, shape=(len_nodes * 2,)).view(
+                numpy.int64
+            )
+            - 1
+        )
+
+        celltypes = self.celltypes
+        n_nodes = numpy.array([CELL_N_NODES[t] for t in celltypes])
+
+        cells = numpy.empty(self.nelems + n_nodes.sum(), dtype=numpy.int64)
+
+        el_idx = 0
+        for offset, npts, typ in zip(el_offset, n_nodes, celltypes):
+            cells[el_idx] = npts
+
+            tmp = el_nodes[offset : offset + npts]
+            if typ == CellType.WEDGE:  # prism type in lagrit
+                tmp = tmp[[0, 2, 1, 3, 5, 4]]
+
+            cells[el_idx + 1 : el_idx + 1 + npts] = tmp
+            el_idx = el_idx + 1 + npts
+
+        return cells
+
+    def to_pyvista(self):
+        try:
+            import pyvista as pv
+        except ImportError:
+            raise ImportError("PyVista is not installed")  # noqa: B904
+
+        return pv.UnstructuredGrid(self.cells, self.celltypes, self.points)
+
+    def plot(self, show_edges=True, show_bounds=True, **kwargs):
+        self.to_pyvista().plot(show_edges=show_edges, show_bounds=show_bounds, **kwargs)
 
     def status(self, brief=False):
         self._parent.cmo_status(self.name, brief=brief)
