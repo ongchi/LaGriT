@@ -3469,8 +3469,8 @@ class MO:
         self,
         filename: str,
         meshfilename: str,
-        matnames: Dict[str, int] = {},  # noqa: B006
-        facenames: Dict[str, int] = {},  # noqa: B006
+        matnames: Dict[int, str] = {},  # noqa: B006
+        facenames: Dict[int, str] = {},  # noqa: B006
     ):
         """
         Write ats style xml file with regions
