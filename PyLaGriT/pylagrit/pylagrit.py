@@ -44,6 +44,21 @@ CELL_N_NODES = {
     CellType.HEXAHEDRON: 8,
     None: 10,
 }
+# Cell type mapping to PFLOTRAN implicit unstructured grid
+PF_CELL_TYPE_MAP = numpy.array(
+    [
+        None,  # vertex
+        None,  # line
+        None,  # triangle
+        None,  # quad
+        "T",  # tetra
+        "P",  # pyramid
+        "W",  # prism
+        "H",  # hexahedron
+        None,  # hybrid
+        None,  # polygon
+    ]
+)
 
 
 class LaGriT_Warning(Warning):
@@ -3377,7 +3392,36 @@ class MO:
         cmd = ["dump", "zone_imt", filename, self.name, str(imt_value)]
         self.sendcmd("/".join(cmd))
 
-    def dump_pflotran(self, filename_root: str, nofilter_zero=False):
+    def dump_pflotran_ugi(self, filename: str):
+        """
+        Dump PFLOTRAN unstructured implicit (ugi) file
+        """
+        points = self.points
+        eltypeids = self.cmo_get_info("itettyp", numpy.int64)
+        eltypes = PF_CELL_TYPE_MAP[eltypeids - 1]
+        cells = self.cells
+
+        with open(filename, "w") as pf_ugi:
+            pf_ugi.write(f"{self.nelems} {self.nnodes}\n")
+
+            cell_idx = 0
+            for n in range(self.nelems):
+                if eltypes[n] is None:
+                    raise ValueError("unsupported element type:")
+
+                pf_ugi.write(f"{eltypes[n]} ")
+
+                n_nodes = cells[cell_idx]
+                cell_idx += 1
+                pf_ugi.write(" ".join(map(str, cells[cell_idx : cell_idx + n_nodes])))
+                pf_ugi.write("\n")
+                cell_idx += n_nodes
+
+            for p in points:
+                pf_ugi.write(" ".join(map(str, p)))
+                pf_ugi.write("\n")
+
+    def dump_pflotran_uge(self, filename_root: str, nofilter_zero=False):
         """
         Dump PFLOTRAN UGE file
 
@@ -3399,7 +3443,7 @@ class MO:
             ... )
             >>> m.status()
             >>> m.status(brief=True)
-            >>> m.dump_pflotran("test_pflotran_dump")
+            >>> m.dump_pflotran_uge("test_pflotran_dump")
         """
         cmd = ["dump", "pflotran", filename_root, self.name]
         if nofilter_zero:
