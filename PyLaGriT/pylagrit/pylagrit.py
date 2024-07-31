@@ -3,7 +3,7 @@ import os
 import warnings
 import xml.etree.ElementTree as ET
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from ctypes.util import find_library
 from itertools import product
 from pathlib import Path
@@ -14,7 +14,12 @@ import numpy
 
 from pyvista import CellType
 
-from .config import CELL_NODE_NUMBERS, PF_CELL_TYPE_MAP, VTK_CELL_TYPE_MAP
+from .config import (
+    CELL_NODE_NUMBERS,
+    NODES_FOR_FACE,
+    PF_CELL_TYPE_MAP,
+    VTK_CELL_TYPE_MAP,
+)
 from .utilities import dlclose, make_name, minus_self
 
 
@@ -3377,6 +3382,51 @@ class MO:
             for p in points:
                 pf_ugi.write(" ".join(map(str, p)))
                 pf_ugi.write("\n")
+
+    def dump_pflotran_surface(self, surface_mesh: "MO", filename_prefix: str):
+        """
+        Dump PFLOTRAN implicit surface definition (*.ss) file and return the surface mesh object
+        """
+        el_ids = surface_mesh.cmo_get_info("idelem1", numpy.int64)
+        elface_ids = surface_mesh.cmo_get_info("idface1", numpy.int64)
+        face_ids = surface_mesh.cmo_get_info("itetclr", numpy.int64)
+
+        cells = self.cells
+        stacked_cells = []
+        cell_idx = 0
+        for _ in range(self.nelems):
+            n_nodes = cells[cell_idx]
+            stacked_cells.append(
+                # cell id starts from 1 in PFLOTRAN
+                numpy.array(cells[cell_idx : cell_idx + 1 + n_nodes]) + 1
+            )
+            cell_idx += 1 + n_nodes
+
+        eltypeids = self.cmo_get_info("itettyp", numpy.int64)
+
+        face_collection = defaultdict(list)
+        for el, elface, face in zip(el_ids, elface_ids, face_ids):
+            eltype = eltypeids[el - 1]
+            face_map = NODES_FOR_FACE[eltype - 1]
+            if face_map is None:
+                continue
+
+            mask = face_map[elface - 1]
+            face_collection[face].append(stacked_cells[el - 1][mask])
+
+        for face_id, nodes in face_collection.items():
+            with open(f"{filename_prefix}_{face_id:02}.ss", "w") as f:
+                f.write(f"{len(nodes)}\n")
+                for node_ids in nodes:
+                    if len(node_ids) == 3:
+                        f.write("T ")
+                    elif len(node_ids) == 4:
+                        f.write("Q ")
+                    else:
+                        raise ValueError("unsupported boundary faces")
+
+                    f.write(" ".join(map(str, node_ids)))
+                    f.write("\n")
 
     def dump_pflotran_uge(self, filename_root: str, nofilter_zero=False):
         """
