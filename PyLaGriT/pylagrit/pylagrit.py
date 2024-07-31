@@ -5966,6 +5966,30 @@ class EltSet:
         )
         self._parent.sendcmd(cmd)
 
+    def dump_pflotran_region(self, filename: str):
+        att_name = make_name("mask", self._parent.information()["attributes"].keys())
+        self._parent.add_element_attribute(att_name, vtype="VINT", value=0)
+        self.setatt(att_name, 1)
+
+        mask = self._parent.cmo_get_info(att_name, numpy.int64)
+
+        if filename.endswith(".h5"):
+            from h5py import File
+
+            h5file = File(filename, mode="w")
+            h5file.create_dataset(
+                f"Regions/{self.name}/Cell Ids",
+                data=numpy.arange(1, len(mask) + 1)[mask == 1],
+            )
+            h5file.close()
+        else:
+            with open(filename, "w") as f:
+                for i, m in enumerate(mask):
+                    if m == 1:
+                        f.write(f"{i+1}\n")
+
+        self._parent.delatt([att_name])
+
 
 class Region:
     """Region class"""
@@ -5982,6 +6006,19 @@ class Region:
         self._parent.sendcmd(cmd)
         del self._parent.regions[self.name]
 
+    def eltset(self, name: Optional[str] = None):
+        if name is None:
+            name = make_name("elt", self._parent.eltset.keys())
+        cmd = "/".join(["eltset", name, "region", str(self)])
+        self._parent.sendcmd(cmd)
+        self._parent.eltset[name] = EltSet(name, self._parent)
+        return self._parent.eltset[name]
+
+    def dump_pflotran_region(self, filename: str):
+        elts = self.eltset(name=self.name)
+        elts.dump_pflotran_region(filename)
+        elts.delete()
+
 
 class MRegion:
     """Region class"""
@@ -5997,6 +6034,19 @@ class MRegion:
         cmd = "mregion/" + self.name + "/release"
         self._parent.sendcmd(cmd)
         del self._parent.mregions[self.name]
+
+    def eltset(self, name: Optional[str] = None):
+        if name is None:
+            name = make_name("elt", self._parent.eltset.keys())
+        cmd = "/".join(["eltset", name, "mregion", str(self)])
+        self._parent.sendcmd(cmd)
+        self._parent.eltset[name] = EltSet(name, self._parent)
+        return self._parent.eltset[name]
+
+    def dump_pflotran_region(self, filename: str):
+        elts = self.eltset(name=self.name)
+        elts.dump_pflotran_region(filename)
+        elts.delete()
 
 
 class FaceSet:
