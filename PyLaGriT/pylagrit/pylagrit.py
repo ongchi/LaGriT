@@ -2109,6 +2109,8 @@ class MO:
             attr_data[i : i + (ncols * buflen)].split()
             for i in range(0, len(attr_data), ncols * buflen)
         ]:
+            if len(attr) == 0:
+                continue
             name = attr[0]
             atts["attributes"][name] = {}
             atts["attributes"][name]["type"] = attr[1]
@@ -5978,7 +5980,7 @@ class EltSet:
         if filename.endswith(".h5"):
             from h5py import File
 
-            h5file = File(filename, mode="w")
+            h5file = File(filename, mode="a")
             h5file.create_dataset(
                 f"Regions/{self.name}/Cell Ids",
                 data=numpy.arange(1, len(mask) + 1)[mask == 1],
