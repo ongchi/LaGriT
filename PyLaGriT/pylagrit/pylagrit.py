@@ -4181,6 +4181,8 @@ class MO:
         assert len(quadpts) == 2, "nnodes must have one value == 1 and two values > 1"  # noqa: S101
 
         cmd = ["quadxy"]
+        cmd.extend(map(str, quadpts))
+
         for v in pts:
             assert len(v) == 3, "vectors must be of length 3 (x,y,z)"  # noqa: S101
             cmd.append(",".join(list(map(str, v))))
