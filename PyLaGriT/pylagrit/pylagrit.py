@@ -1896,6 +1896,24 @@ class MO:
         )
         self.sendcmd(cmd)
 
+    def getatt(self, att: str):
+        """
+        Get a value(s) of a attribute
+        """
+
+        attrs = self.information()["attributes"]
+        if att not in attrs:
+            raise ValueError("Attribute not found")
+
+        type_ = attrs[att]["type"]
+
+        if type_ in ["INT", "VINT"]:
+            return self.cmo_get_info(att, numpy.int64)
+        elif type_ in ["REAL", "VDOUBLE"]:
+            return self.cmo_get_info(att, numpy.float64)
+        elif type_ in ["CHARACTER", "VCHAR"]:
+            return self.cmo_get_info(att, numpy.string_)
+
     def add_element_attribute(
         self,
         attname: str,
