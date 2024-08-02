@@ -1842,6 +1842,14 @@ class MO:
 
         self.sendcmd(cmd)
 
+    def modatt(self, att: str, field: str, value: int | float | str):
+        """
+        Modify a field for a mesh object attribute
+        """
+        cmd = ["cmo", "modatt", str(self), att, field, str(value)]
+
+        self.sendcmd("/".join(cmd))
+
     def delatt(self, attnames: List[str], force=True):
         """
         Delete a list of attributes
