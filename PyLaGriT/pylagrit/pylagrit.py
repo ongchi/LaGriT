@@ -4635,7 +4635,7 @@ class MO:
     def refine_to_object(
         self,
         mo: "MO",
-        level: Optional[int] = None,
+        level: int = 1,
         imt: Optional[int] = None,
         prd_choice: Optional[int] = None,
     ):
@@ -4652,15 +4652,10 @@ class MO:
         :type prd_choice: int
         """
 
-        itetlevbool = True
-        if level == 1:
-            itetlevbool = False
-        if level is None:
-            level = 1
-            itetlevbool = False
         for _ in range(level):
             attr_name = self.intersect_elements(mo)
-            if itetlevbool:
+
+            if level > 1:
                 e_attr = self.eltset_attribute(attr_name, 0, boolstr="gt")
                 e_level = self.eltset_attribute("itetlev", level, boolstr="lt")
                 e_refine = self.eltset_bool([e_attr, e_level], boolstr="inter")
@@ -4668,18 +4663,22 @@ class MO:
                 e_level.delete()
             else:
                 e_refine = self.eltset_attribute(attr_name, 0, boolstr="gt")
+
             if prd_choice is not None:
                 p_refine = e_refine.pset()
                 p_refine.refine(prd_choice=prd_choice)
                 p_refine.delete()
             else:
                 e_refine.refine()
+
+            mo.rmpoint_eltset(e_refine)
             e_refine.delete()
+
         if imt is not None:
             attr_name = self.intersect_elements(mo)
             e_attr = self.eltset_attribute(attr_name, 0, boolstr="gt")
             p = e_attr.pset()
-            p.setatt("imt", 13)
+            p.setatt("imt", imt)
             p.delete()
 
     def intersect_elements(self, mo: "MO", attr_name: Optional[str] = None):
@@ -5914,7 +5913,7 @@ class EltSet:
     def list(self, attname: Optional[str] = None, stride=(1, 0, 0)):
         self._parent.printatt(attname=attname, stride=stride, eltset=self, ptype="list")
 
-    def refine(self, amr=""):
+    def refine(self):
         """
         Refine elements in the element set
 
@@ -5965,9 +5964,7 @@ class EltSet:
             >>>
             >>> mtri.paraview(filename="discrete_fracture.inp")
         """
-        cmd = "/".join(
-            ["refine", "eltset", "eltset,get," + self.name, "amr " + str(amr)]
-        )
+        cmd = "/".join(["refine", "eltset", f"eltset,get,{self}"])
         self._parent.sendcmd(cmd)
 
     def pset(self, name: Optional[str] = None):
