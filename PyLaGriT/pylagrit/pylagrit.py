@@ -7,7 +7,7 @@ from collections import OrderedDict, defaultdict
 from ctypes.util import find_library
 from itertools import product
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Tuple, cast
+from typing import Dict, Iterable, List, Literal, Optional, Tuple, cast
 from xml.dom import minidom
 
 import numpy
@@ -30,20 +30,18 @@ class LaGriT_Warning(Warning):
 class PyLaGriT:
     """
     Python lagrit class
-
-    :param lagrit_exe: Path to LaGriT executable
-    :type lagrit_exe: str
-    :param verbose: If True, LaGriT terminal output will be displayed
-    :type verbose: bool
-    :param batch: If True, PyLaGriT will be run in batch mode, collecting LaGriT commands until the run_batch method is called.
-    :type batch: bool
-    :param batchfile: Name of batch file to use if batch is True
-    :type batchfile: str
+    :param lagrit_lib: Path to LaGriT library
+    :type lagrit_lib: str
+    :param mode: tty output mode
+    :type mode: str
+    :param log_file: Path to log file
+    :type log_file: str
+    :param out_file: Path to out file
+    :type out_file: str
     :param gmv_exe: Path to GMV executable
     :type gmv_exe: str
     :param paraview_exe: Path to ParaView executable
     :type paraview_exe: str
-    :param timeout: Number of seconds to wait for response from LaGriT
     """
 
     def __init__(
@@ -1486,16 +1484,11 @@ class PyLaGriT:
         #     )
         #     print("Set elem_type to a 2D format like 'quad' or 'triplane'")
         #     return
-        if x is None or len(x) == 0:
-            x = [0]
-        if y is None or len(y) == 0:
-            y = [0]
-        if z is None or len(z) == 0:
-            z = [0]
-        x = list(numpy.unique(x))
-        y = list(numpy.unique(y))
-        z = list(numpy.unique(z))
-        nodelist = numpy.array(list(product(*[z, y, x])))
+        xx = numpy.array([0]) if x is None or len(x) == 0 else numpy.unique(x)
+        yy = numpy.array([0]) if y is None or len(y) == 0 else numpy.unique(y)
+        zz = numpy.array([0]) if z is None or len(z) == 0 else numpy.unique(z)
+
+        nodelist = numpy.array(list(product(*[zz, yy, xx])))
         nodelist = numpy.fliplr(nodelist)
 
         outfile = open(filename, "w")
@@ -1521,7 +1514,7 @@ class PyLaGriT:
                 "createpts",
                 "brick",
                 "xyz",
-                " ".join([str(len(x)), str(len(y)), str(len(z))]),
+                " ".join([str(len(xx)), str(len(yy)), str(len(zz))]),
                 "1 0 0",
                 "connect",
             ]
@@ -3328,7 +3321,7 @@ class MO:
         filename: str,
         psets=False,
         eltsets=False,
-        facesets: Optional[List["FaceSet"]] = None,
+        facesets: Optional[Iterable["FaceSet"]] = None,
     ):
         """
         Dump exo file
