@@ -241,22 +241,17 @@ set_source_files_properties(
 
 # Compile LaGriT routines as a library
 add_library(
-    objlib
-    OBJECT
+    liblagrit_static
+    STATIC
     ${SRC_UTIL_FILES}
     ${SRC_CORE_FILES}
 )
 
 add_library(
-    liblagrit_static
-    STATIC
-    $<TARGET_OBJECTS:objlib>
-)
-
-add_library(
     liblagrit_shared
     SHARED
-    $<TARGET_OBJECTS:objlib>
+    ${SRC_UTIL_FILES}
+    ${SRC_CORE_FILES}
 )
 
 # Set the shared library version
