@@ -7,7 +7,6 @@ Installation
 The Python module PyLaGriT allows LaGriT to be accessed interactively and in batch mode from Python. 
 To install PyLaGriT on your system, change to the PyLaGriT directory and run ``python setup.py install``. 
 Alternatively, the PyLaGriT folder can be added to your **PYTHONPATH** environment variable. 
-Due to the use of the pexpect Python module, PyLaGriT does not work on Windows. 
 It has been tested on Mac and Linux operating systems. 
 
 Since PyLaGriT is simply a frontend for LaGriT, you will need a lagrit executable to use PyLaGriT.
