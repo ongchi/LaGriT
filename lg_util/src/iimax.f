@@ -1,5 +1,5 @@
 *dk,iimax
-      function iimax(n,ix,incx)
+      integer function iimax(n,ix,incx)
 C
 C ######################################################################
 C

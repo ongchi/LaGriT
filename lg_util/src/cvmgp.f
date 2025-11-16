@@ -1,5 +1,5 @@
 *dk,cvmgp
-      function cvmgp(i1,i2,value)
+      integer function cvmgp(i1,i2,value)
 C
 C ######################################################################
 C

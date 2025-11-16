@@ -1,5 +1,5 @@
 *dk,iimin
-      function iimin(n,ix,incx)
+      integer function iimin(n,ix,incx)
 C
 C ######################################################################
 C

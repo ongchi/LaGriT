@@ -1,5 +1,5 @@
 *dk,icvmgz
-      function icvmgz(i1,i2,value)
+      integer function icvmgz(i1,i2,value)
 C
 C ######################################################################
 C

@@ -1,5 +1,5 @@
 *dk,cvmgnr
-      function cvmgnr(i1,i2,value)
+      integer function cvmgnr(i1,i2,value)
 C
 C ######################################################################
 C

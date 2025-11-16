@@ -1,5 +1,5 @@
 *dk,icvmgt
-      function icvmgt(i1,i2,lmask)
+      integer function icvmgt(i1,i2,lmask)
 C
 C ######################################################################
 C
