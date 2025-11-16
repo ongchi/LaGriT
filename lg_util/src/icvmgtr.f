@@ -1,5 +1,5 @@
 *dk,icvmgtr
-      function icvmgtr(a1,a2,lmask)
+      double precision function icvmgtr(a1,a2,lmask)
 C
 C ######################################################################
 C
@@ -13,12 +13,14 @@ CPVCS    original version
 C
 C ######################################################################
 C
-      implicit real*8 (a-h,o-z)
-      logical lmask
-      if(lmask) then
-        icvmgtr=a1
+      implicit none
+      double precision, intent(in) :: a1, a2
+      logical, intent(in) :: lmask
+
+      if (lmask) then
+        icvmgtr = a1
       else
-        icvmgtr=a2
+        icvmgtr = a2
       endif
-      return
-      end
+
+      end function icvmgtr

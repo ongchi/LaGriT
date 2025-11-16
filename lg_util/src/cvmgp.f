@@ -13,14 +13,13 @@ CPVCS    original version
 C
 C ######################################################################
 C
-       implicit real*8 (a-h,o-z)
-      integer i1,i2,value
-      if(value.ge.0) then
-         cvmgp=i1
+      implicit none
+      integer, intent(in) :: i1, i2, value
+
+      if (value >= 0) then
+         cvmgp = i1
       else
-         cvmgp=i2
+         cvmgp = i2
       endif
-      goto 9999
- 9999 continue
-      return
-      end
+
+      end function cvmgp

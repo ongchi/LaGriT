@@ -13,22 +13,23 @@ CPVCS    original version
 C
 C ######################################################################
 C
-       implicit real*8 (a-h,o-z)
-      integer n, incx, ix(n)
-      iimax=-1
-      i1=ix(1)
-      do i=1,n,incx
-         i1=max(i1,ix(i))
-      enddo
-      icount=0
-      do i=1,n,incx
-         icount=icount+1
-         if(ix(i).eq.i1) then
-            iimax=icount
-            goto 9999
+      implicit none
+      integer, intent(in) :: n, incx, ix(n)
+      integer :: i, i1, icount
+
+      iimax = -1
+      i1 = ix(1)
+      do i = 1, n, incx
+         i1 = max(i1, ix(i))
+      end do
+
+      icount = 0
+      do i = 1, n, incx
+         icount = icount + 1
+         if (ix(i) == i1) then
+            iimax = icount
+            exit
          endif
-      enddo
-      goto 9999
- 9999 continue
-      return
-      end
+      end do
+
+      end function iimax

@@ -13,15 +13,14 @@ CPVCS    original version
 C
 C ######################################################################
 C
-       implicit real*8 (a-h,o-z)
-      integer i1,i2
-      logical lmask
-      if(lmask.eqv..true.) then
-         icvmgt=i1
+      implicit none
+      integer, intent(in) :: i1, i2
+      logical, intent(in) :: lmask
+
+      if (lmask) then
+         icvmgt = i1
       else
-         icvmgt=i2
+         icvmgt = i2
       endif
-      goto 9999
- 9999 continue
-      return
-      end
+
+      end function icvmgt
