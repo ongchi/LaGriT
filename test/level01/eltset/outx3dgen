@@ -1,0 +1,161 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:07          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+# Test LaGriT                                                                   
+# Create a new mesh along with some point sets.                                 
+cmo/create/mo///hex                                                             
+createpts/brick/xyz/11,11,11/0,0,0/10,10,10/1,1,1                               
+          Number of nodes:        1331                                          
+          Number of elements:        1000                                       
+          Number of negative volume elements:           0                       
+          Total volume:     0.100000000000E+04                                  
+pset/pset1/geom/rtp/1 0 0/0,0,0/5,360,180/                                      
+ 
+ THE PSET  pset1  HAS         99 POINTS                                         
+pset/pset2/geom/xyz/1 0 0/7,7,7/10,10,10/                                       
+ 
+ THE PSET  pset2  HAS         64 POINTS                                         
+eltset/eset1/inclusive/pset get pset1/                                          
+ 
+ THE ELTSET eset1                            HAS         99 ELEMENTS            
+eltset//list                                                                    
+ 
+ THERE ARE  1 ELTSETS DEFINED                                                   
+  eset1                                                                         
+# Assign colors to the points and elements                                      
+eltset/eset2/inclusive/pset get pset2/                                          
+ 
+ THE ELTSET eset2                            HAS         64 ELEMENTS            
+cmo/setatt/mo/imt/1 0 0/1                                                       
+      1331 values reset for attribute imt1                                      
+ 
+cmo/setatt/mo/imt/pset get pset1/2                                              
+        99 values reset for attribute imt1                                      
+ 
+cmo/setatt/mo/imt/pset get pset2/3                                              
+        64 values reset for attribute imt1                                      
+ 
+cmo/setatt/mo/itetclr/1 0 0/1                                                   
+      1000 values reset for attribute itetclr                                   
+ 
+cmo/setatt/mo/itetclr/eltset get eset1/2                                        
+        99 values reset for attribute itetclr                                   
+ 
+cmo/setatt/mo/itetclr/eltset get eset2/3                                        
+        64 values reset for attribute itetclr                                   
+ 
+dump/avs/output_mesh.inp/mo                                                     
+cmo/modatt/-def-/-def-/ioflag/x                                                 
+finish                                                                          
+# Test the list command.                                                        
+eltset//list                                                                    
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+eltset/0/list                                                                   
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+eltset/-def-/list                                                               
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+# Verify that eltset only appends '.cellset' if it is not already present.      
+eltset/eset1/write/output_eset01                                                
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT eset1    1 ELTSETS TO FILE                                       
+eltset/eset2/write/output_eset02.cellset                                        
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: OUTPUT eset2    1 ELTSETS TO FILE                                       
+# Test various incantations of the [ascii|binary] option.                       
+eltset/eset1/write/output_eset03/ascii                                          
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT eset1    1 ELTSETS TO FILE                                       
+eltset/eset1/write/output_eset04/binary                                         
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT eset1    1 ELTSETS TO FILE                                       
+eltset/eset1/write/output_eset05/                                               
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT eset1    1 ELTSETS TO FILE                                       
+eltset/eset1/write/output_eset06/-def-                                          
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT eset1    1 ELTSETS TO FILE                                       
+eltset/eset1/write/output_eset07                                                
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT eset1    1 ELTSETS TO FILE                                       
+# Verify that -def-, -all-, and <blank> work properly as eltset names.          
+eltset/-def-/write/output_eset08                                                
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT -all-    1 ELTSETS TO FILE                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT -all-    1 ELTSETS TO FILE                                       
+eltset/-all-/write/output_eset09                                                
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT -all-    1 ELTSETS TO FILE                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT -all-    1 ELTSETS TO FILE                                       
+eltset//write/output_eset10                                                     
+ 
+ THERE ARE  2 ELTSETS DEFINED                                                   
+  eset1                             eset2                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT -all-    1 ELTSETS TO FILE                                       
+ELTSET: Appended .cellset to the file name                                      
+ELTSET: OUTPUT -all-    1 ELTSETS TO FILE                                       
+finish                                                                          
+LaGriT successfully completed                                                   

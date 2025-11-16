@@ -1,0 +1,633 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:13          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+# Test recon                                                                    
+##############################################                                  
+# seven triangles with materials set                                            
+cmo/create/mo///triplane                                                        
+read/avs/input_fan.inp/mo                                                       
+cmo/status/brief                                                                
+ 
+The current-mesh-object(CMO) is: mo                                             
+ 
+  1 Mesh Object name: mo                                                        
+    number of nodes =             7        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+ 
+finish                                                                          
+cmo/setatt/mo/imt/1 0 0/1                                                       
+Warning: nelements = 0                                                          
+         7 values reset for attribute imt1                                      
+ 
+cmo/setatt/mo/itp/1 0 0/0                                                       
+Warning: nelements = 0                                                          
+         7 values reset for attribute itp1                                      
+ 
+connect                                                                         
+ Coordinates of enclosing triangle are:                                         
+          -0.26250D+01-0.80000D+00 0.00000D+00                                  
+           0.41250D+01-0.87500D+00 0.00000D+00                                  
+           0.75750D+00 0.70000D+01 0.00000D+00                                  
+                    Warning from: delaunay2d                        nlstptl is 0
+ Cannot locate interface between points       416 and       416.                
+ 
+ Successfully eliminated all multimaterial connections.                         
+ 
+ The mesh is now complete!                                                      
+ 
+LaGriT FINISH: connect                                                          
+ 
+LaGriT WARNING: connect finished with 0 elements                                
+ 
+resetpts/itp                                                                    
+geniee                                                                          
+geniee_cmo warning: no elements with faces so no jtet                           
+finish                                                                          
+cmo setatt mo itetclr 1                                                         
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+cmo setatt mo itetclr 1 1 1 5                                                   
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+cmo setatt mo itetclr 2 2 1 2                                                   
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+cmo setatt mo itetclr 3 3 1 3                                                   
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+cmo setatt mo itetclr 4 4 1 4                                                   
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+cmo setatt mo itetclr 5 5 1 1                                                   
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+cmo printatt mo itetclr                                                         
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+# set double defined points                                                     
+settets parents                                                                 
+                        Error from:   intradd                           mmrelprt
+cmo printatt mo itetclr                                                         
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+cmo printatt mo imt1                                                            
+Warning: nelements = 0                                                          
+Attribute: imt1                                                                 
+         1          1                                                           
+         2          1                                                           
+         3          1                                                           
+         4          1                                                           
+         5          1                                                           
+         6          1                                                           
+         7          1                                                           
+ 
+# set node imt1 based on element color                                          
+resetpts/itp                                                                    
+geniee                                                                          
+geniee_cmo warning: no elements with faces so no jtet                           
+finish                                                                          
+settets color_points                                                            
+                        Error from:   intradd                           mmrelprt
+resetpts/itp                                                                    
+geniee                                                                          
+geniee_cmo warning: no elements with faces so no jtet                           
+finish                                                                          
+cmo printatt mo itetclr                                                         
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+cmo printatt mo imt1                                                            
+Warning: nelements = 0                                                          
+Attribute: imt1                                                                 
+         1          1                                                           
+         2          1                                                           
+         3          1                                                           
+         4          1                                                           
+         5          1                                                           
+         6          1                                                           
+         7          1                                                           
+ 
+dump/avs/output_fan_connect.inp/mo                                              
+cmo/modatt/-def-/-def-/ioflag/x                                                 
+finish                                                                          
+quality                                                                         
+         0 total elements in mesh.                                              
+ 
+cmo setatt mo idebug 1                                                          
+Warning: nelements = 0                                                          
+         1 values reset for attribute idebug                                    
+ 
+recon 1                                                                         
+ 
+WARNING Recon Early Exit: 0 elements                                            
+ 
+RECON: done.                                                                    
+error in command : recon 1                                                      
+cmo status mo                                                                   
+ 
+The current-mesh-object(CMO) is: mo                                             
+ 
+  1 Mesh Object name: mo                                                        
+    number of nodes =             7        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+          NAME     TYPE     RANK        LENGTH      INTER PERSI IO   VALUE      
+ 
+  1           -def- VDOU     scalar          nnodes linea tempo   x  0.000E+00  
+  2          scalar  INT     scalar          scalar const perma   l  1.000E+00  
+  3          vector  INT     scalar          scalar const perma   l  3.000E+00  
+  4          nnodes  INT     scalar          scalar const perma   l  7.000E+00  
+  5          nedges  INT     scalar          scalar const perma   l  0.000E+00  
+  6          nfaces  INT     scalar          scalar const perma   l  0.000E+00  
+  7       nelements  INT     scalar          scalar const perma   l  0.000E+00  
+  8          mbndry  INT     scalar          scalar const perma   l  1.600E+07  
+  9 ndimensions_top  INT     scalar          scalar const perma   l  2.000E+00  
+ 10 ndimensions_geo  INT     scalar          scalar const perma   l  2.000E+00  
+ 11 nodes_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 12 edges_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 13 faces_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 14          isetwd VDOU     scalar          nnodes    or perma   l  0.000E+00  
+ 15          ialias VINT     scalar          nnodes seque perma   l  0.000E+00  
+ 16            imt1 VINT     scalar          nnodes   max perma gal  0.000E+00  
+ 17            itp1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 18            icr1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 19            isn1 VINT     scalar          nnodes  user perma gal  0.000E+00  
+ 20             xic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 21             yic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 22             zic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 23          xtetwd VDOU     scalar       nelements    or perma   l  0.000E+00  
+ 24         itetclr VINT     scalar       nelements  user perma   l  0.000E+00  
+ 25         itettyp VINT     scalar       nelements  user perma   l  0.000E+00  
+ 26         itetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 27         jtetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 28            itet VINT nodes_per_       nelements  user perma   l  0.000E+00  
+ 29            jtet VINT faces_per_       nelements  user perma   l  0.000E+00  
+ 30        ipolydat CHAR     scalar          scalar const perma   l no          
+ 31           vor2d CHAR     scalar          scalar const perma   l yes         
+ 32           vor3d CHAR     scalar          scalar const perma   l no          
+ 33         epsilon REAL     scalar          scalar const perma   l  1.000E-15  
+ 34        epsilonl REAL     scalar          scalar const perma   l  3.511E-13  
+ 35        epsilona REAL     scalar          scalar const perma   l  5.551E-13  
+ 36        epsilonv REAL     scalar          scalar const perma   l  5.551E-13  
+ 37         ipointi  INT     scalar          scalar const perma   l  7.000E+00  
+ 38         ipointj  INT     scalar          scalar const perma   l  7.000E+00  
+ 39          idebug  INT     scalar          scalar const perma   l  1.000E+00  
+ 40     itypconv_sm  INT     scalar          scalar const perma   l  1.000E+00  
+ 41      maxiter_sm  INT     scalar          scalar const perma   l  2.500E+01  
+ 42      tolconv_sm REAL     scalar          scalar const perma   l  1.000E+00  
+ 43          nnfreq  INT     scalar          scalar const perma   l  1.000E+00  
+ 44        ivoronoi  INT     scalar          scalar const perma   l  1.000E+00  
+ 45        iopt2to2  INT     scalar          scalar const perma   l  2.000E+00  
+ 46        dumptype CHAR     scalar          scalar const perma   l binary      
+ 47         velname CHAR     scalar          scalar const perma   l vels        
+ 48        densname CHAR     scalar          scalar const perma   l ric         
+ 49        presname CHAR     scalar          scalar const perma   l pic         
+ 50        enername CHAR     scalar          scalar const perma   l eic         
+ 51            xmin REAL     scalar          scalar const perma   l  0.000E+00  
+ 52            ymin REAL     scalar          scalar const perma   l  0.000E+00  
+ 53            zmin REAL     scalar          scalar const perma   l  0.000E+00  
+ 54            xmax REAL     scalar          scalar const perma   l  1.500E+00  
+ 55            ymax REAL     scalar          scalar const perma   l  5.000E-01  
+ 56            zmax REAL     scalar          scalar const perma   l  0.000E+00  
+ 57    kdtree_level  INT     scalar          scalar const perma   l  0.000E+00  
+ 58 max_number_sets  INT     scalar          scalar const perma   l  6.400E+01  
+ 59 number_of_psets  INT     scalar          scalar const perma   l  0.000E+00  
+ 60 number_of_eltse  INT     scalar          scalar const perma   l  0.000E+00  
+ 61       psetnames VCHA     scalar max_number_sets const perma   l             
+ 62     eltsetnames VCHA     scalar max_number_sets const perma   l             
+ 63       geom_name CHAR     scalar max_number_sets const perma   l -defaultge  
+ 64       fsetnames VCHA     scalar max_number_sets const perma   l             
+ 65 number_of_fsets  INT     scalar          scalar const perma   l  0.000E+00  
+quality                                                                         
+         0 total elements in mesh.                                              
+ 
+dump/avs/output_fan_recon1.inp/mo                                               
+cmo/modatt/-def-/-def-/ioflag/x                                                 
+finish                                                                          
+cmo/delete/mo                                                                   
+     Released Mesh Object: mo                                                   
+##############################################                                  
+# single triangle with angle slightly gt 90                                     
+# should output 2 elements and 4 points                                         
+cmo/create/mo///triplane                                                        
+read/avs/input_tri1a.inp/mo                                                     
+cmo/status/brief                                                                
+ 
+The current-mesh-object(CMO) is: mo                                             
+ 
+  1 Mesh Object name: mo                                                        
+    number of nodes =             3        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+ 
+finish                                                                          
+cmo/setatt/mo/imt/1 0 0/1                                                       
+Warning: nelements = 0                                                          
+         3 values reset for attribute imt1                                      
+ 
+cmo/setatt/mo/itp/1 0 0/0                                                       
+Warning: nelements = 0                                                          
+         3 values reset for attribute itp1                                      
+ 
+connect                                                                         
+ Coordinates of enclosing triangle are:                                         
+          -0.20250D+01-0.18600D+01 0.00000D+00                                  
+           0.29250D+01-0.20250D+01 0.00000D+00                                  
+           0.45450D+00 0.54000D+01 0.00000D+00                                  
+                    Warning from: delaunay2d                        nlstptl is 0
+ Cannot locate interface between points       288 and       288.                
+ 
+ Successfully eliminated all multimaterial connections.                         
+ 
+ The mesh is now complete!                                                      
+ 
+LaGriT FINISH: connect                                                          
+ 
+LaGriT WARNING: connect finished with 0 elements                                
+ 
+resetpts/itp                                                                    
+geniee                                                                          
+geniee_cmo warning: no elements with faces so no jtet                           
+finish                                                                          
+quality                                                                         
+         0 total elements in mesh.                                              
+ 
+dump/avs/output_tri1a_connect.inp/mo                                            
+cmo/modatt/-def-/-def-/ioflag/x                                                 
+finish                                                                          
+cmo setatt mo idebug 1                                                          
+Warning: nelements = 0                                                          
+         1 values reset for attribute idebug                                    
+ 
+recon 1                                                                         
+ 
+WARNING Recon Early Exit: 0 elements                                            
+ 
+RECON: done.                                                                    
+error in command : recon 1                                                      
+cmo status mo                                                                   
+ 
+The current-mesh-object(CMO) is: mo                                             
+ 
+  1 Mesh Object name: mo                                                        
+    number of nodes =             3        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+          NAME     TYPE     RANK        LENGTH      INTER PERSI IO   VALUE      
+ 
+  1           -def- VDOU     scalar          nnodes linea tempo   x  0.000E+00  
+  2          scalar  INT     scalar          scalar const perma   l  1.000E+00  
+  3          vector  INT     scalar          scalar const perma   l  3.000E+00  
+  4          nnodes  INT     scalar          scalar const perma   l  3.000E+00  
+  5          nedges  INT     scalar          scalar const perma   l  0.000E+00  
+  6          nfaces  INT     scalar          scalar const perma   l  0.000E+00  
+  7       nelements  INT     scalar          scalar const perma   l  0.000E+00  
+  8          mbndry  INT     scalar          scalar const perma   l  1.600E+07  
+  9 ndimensions_top  INT     scalar          scalar const perma   l  2.000E+00  
+ 10 ndimensions_geo  INT     scalar          scalar const perma   l  2.000E+00  
+ 11 nodes_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 12 edges_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 13 faces_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 14          isetwd VDOU     scalar          nnodes    or perma   l  0.000E+00  
+ 15          ialias VINT     scalar          nnodes seque perma   l  0.000E+00  
+ 16            imt1 VINT     scalar          nnodes   max perma gal  0.000E+00  
+ 17            itp1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 18            icr1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 19            isn1 VINT     scalar          nnodes  user perma gal  0.000E+00  
+ 20             xic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 21             yic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 22             zic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 23          xtetwd VDOU     scalar       nelements    or perma   l  0.000E+00  
+ 24         itetclr VINT     scalar       nelements  user perma   l  0.000E+00  
+ 25         itettyp VINT     scalar       nelements  user perma   l  0.000E+00  
+ 26         itetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 27         jtetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 28            itet VINT nodes_per_       nelements  user perma   l  0.000E+00  
+ 29            jtet VINT faces_per_       nelements  user perma   l  0.000E+00  
+ 30        ipolydat CHAR     scalar          scalar const perma   l no          
+ 31           vor2d CHAR     scalar          scalar const perma   l yes         
+ 32           vor3d CHAR     scalar          scalar const perma   l no          
+ 33         epsilon REAL     scalar          scalar const perma   l  1.000E-15  
+ 34        epsilonl REAL     scalar          scalar const perma   l  3.454E-13  
+ 35        epsilona REAL     scalar          scalar const perma   l  5.373E-13  
+ 36        epsilonv REAL     scalar          scalar const perma   l  5.373E-13  
+ 37         ipointi  INT     scalar          scalar const perma   l  3.000E+00  
+ 38         ipointj  INT     scalar          scalar const perma   l  3.000E+00  
+ 39          idebug  INT     scalar          scalar const perma   l  1.000E+00  
+ 40     itypconv_sm  INT     scalar          scalar const perma   l  1.000E+00  
+ 41      maxiter_sm  INT     scalar          scalar const perma   l  2.500E+01  
+ 42      tolconv_sm REAL     scalar          scalar const perma   l  1.000E+00  
+ 43          nnfreq  INT     scalar          scalar const perma   l  1.000E+00  
+ 44        ivoronoi  INT     scalar          scalar const perma   l  1.000E+00  
+ 45        iopt2to2  INT     scalar          scalar const perma   l  2.000E+00  
+ 46        dumptype CHAR     scalar          scalar const perma   l binary      
+ 47         velname CHAR     scalar          scalar const perma   l vels        
+ 48        densname CHAR     scalar          scalar const perma   l ric         
+ 49        presname CHAR     scalar          scalar const perma   l pic         
+ 50        enername CHAR     scalar          scalar const perma   l eic         
+ 51            xmin REAL     scalar          scalar const perma   l -1.000E-01  
+ 52            ymin REAL     scalar          scalar const perma   l -1.000E-01  
+ 53            zmin REAL     scalar          scalar const perma   l  0.000E+00  
+ 54            xmax REAL     scalar          scalar const perma   l  1.000E+00  
+ 55            ymax REAL     scalar          scalar const perma   l  1.000E+00  
+ 56            zmax REAL     scalar          scalar const perma   l  0.000E+00  
+ 57    kdtree_level  INT     scalar          scalar const perma   l  0.000E+00  
+ 58 max_number_sets  INT     scalar          scalar const perma   l  6.400E+01  
+ 59 number_of_psets  INT     scalar          scalar const perma   l  0.000E+00  
+ 60 number_of_eltse  INT     scalar          scalar const perma   l  0.000E+00  
+ 61       psetnames VCHA     scalar max_number_sets const perma   l             
+ 62     eltsetnames VCHA     scalar max_number_sets const perma   l             
+ 63       geom_name CHAR     scalar max_number_sets const perma   l -defaultge  
+ 64       fsetnames VCHA     scalar max_number_sets const perma   l             
+ 65 number_of_fsets  INT     scalar          scalar const perma   l  0.000E+00  
+dump/avs/output_tri1a_recon1.inp/mo                                             
+cmo/modatt/-def-/-def-/ioflag/x                                                 
+finish                                                                          
+cmo select mo                                                                   
+quality                                                                         
+         0 total elements in mesh.                                              
+ 
+cmo/delete/mo                                                                   
+     Released Mesh Object: mo                                                   
+##############################################                                  
+# single triangle with extreme angle gt 90                                      
+# should output 3 elements and 5 points                                         
+cmo/create/mo///triplane                                                        
+read/avs/input_tri1b.inp/mo                                                     
+cmo/status/brief                                                                
+ 
+The current-mesh-object(CMO) is: mo                                             
+ 
+  1 Mesh Object name: mo                                                        
+    number of nodes =             3        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+ 
+finish                                                                          
+cmo/setatt/mo/imt/1 0 0/1                                                       
+Warning: nelements = 0                                                          
+         3 values reset for attribute imt1                                      
+ 
+cmo/setatt/mo/itp/1 0 0/0                                                       
+Warning: nelements = 0                                                          
+         3 values reset for attribute itp1                                      
+ 
+connect                                                                         
+ Coordinates of enclosing triangle are:                                         
+          -0.18050D+02-0.16000D+01 0.00000D+00                                  
+           0.27850D+02-0.17500D+01 0.00000D+00                                  
+           0.49490D+01 0.46400D+02 0.00000D+00                                  
+                    Warning from: delaunay2d                        nlstptl is 0
+ Cannot locate interface between points       288 and       288.                
+ 
+ Successfully eliminated all multimaterial connections.                         
+ 
+ The mesh is now complete!                                                      
+ 
+LaGriT FINISH: connect                                                          
+ 
+LaGriT WARNING: connect finished with 0 elements                                
+ 
+resetpts/itp                                                                    
+geniee                                                                          
+geniee_cmo warning: no elements with faces so no jtet                           
+finish                                                                          
+dump/avs/output_tri1b_connect.inp/mo                                            
+cmo/modatt/-def-/-def-/ioflag/x                                                 
+finish                                                                          
+quality                                                                         
+         0 total elements in mesh.                                              
+ 
+cmo setatt mo idebug 1                                                          
+Warning: nelements = 0                                                          
+         1 values reset for attribute idebug                                    
+ 
+recon 1                                                                         
+ 
+WARNING Recon Early Exit: 0 elements                                            
+ 
+RECON: done.                                                                    
+error in command : recon 1                                                      
+cmo status mo                                                                   
+ 
+The current-mesh-object(CMO) is: mo                                             
+ 
+  1 Mesh Object name: mo                                                        
+    number of nodes =             3        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+          NAME     TYPE     RANK        LENGTH      INTER PERSI IO   VALUE      
+ 
+  1           -def- VDOU     scalar          nnodes linea tempo   x  0.000E+00  
+  2          scalar  INT     scalar          scalar const perma   l  1.000E+00  
+  3          vector  INT     scalar          scalar const perma   l  3.000E+00  
+  4          nnodes  INT     scalar          scalar const perma   l  3.000E+00  
+  5          nedges  INT     scalar          scalar const perma   l  0.000E+00  
+  6          nfaces  INT     scalar          scalar const perma   l  0.000E+00  
+  7       nelements  INT     scalar          scalar const perma   l  0.000E+00  
+  8          mbndry  INT     scalar          scalar const perma   l  1.600E+07  
+  9 ndimensions_top  INT     scalar          scalar const perma   l  2.000E+00  
+ 10 ndimensions_geo  INT     scalar          scalar const perma   l  2.000E+00  
+ 11 nodes_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 12 edges_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 13 faces_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 14          isetwd VDOU     scalar          nnodes    or perma   l  0.000E+00  
+ 15          ialias VINT     scalar          nnodes seque perma   l  0.000E+00  
+ 16            imt1 VINT     scalar          nnodes   max perma gal  0.000E+00  
+ 17            itp1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 18            icr1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 19            isn1 VINT     scalar          nnodes  user perma gal  0.000E+00  
+ 20             xic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 21             yic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 22             zic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 23          xtetwd VDOU     scalar       nelements    or perma   l  0.000E+00  
+ 24         itetclr VINT     scalar       nelements  user perma   l  0.000E+00  
+ 25         itettyp VINT     scalar       nelements  user perma   l  0.000E+00  
+ 26         itetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 27         jtetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 28            itet VINT nodes_per_       nelements  user perma   l  0.000E+00  
+ 29            jtet VINT faces_per_       nelements  user perma   l  0.000E+00  
+ 30        ipolydat CHAR     scalar          scalar const perma   l no          
+ 31           vor2d CHAR     scalar          scalar const perma   l yes         
+ 32           vor3d CHAR     scalar          scalar const perma   l no          
+ 33         epsilon REAL     scalar          scalar const perma   l  1.000E-15  
+ 34        epsilonl REAL     scalar          scalar const perma   l  2.276E-12  
+ 35        epsilona REAL     scalar          scalar const perma   l  2.332E-11  
+ 36        epsilonv REAL     scalar          scalar const perma   l  2.332E-11  
+ 37         ipointi  INT     scalar          scalar const perma   l  3.000E+00  
+ 38         ipointj  INT     scalar          scalar const perma   l  3.000E+00  
+ 39          idebug  INT     scalar          scalar const perma   l  1.000E+00  
+ 40     itypconv_sm  INT     scalar          scalar const perma   l  1.000E+00  
+ 41      maxiter_sm  INT     scalar          scalar const perma   l  2.500E+01  
+ 42      tolconv_sm REAL     scalar          scalar const perma   l  1.000E+00  
+ 43          nnfreq  INT     scalar          scalar const perma   l  1.000E+00  
+ 44        ivoronoi  INT     scalar          scalar const perma   l  1.000E+00  
+ 45        iopt2to2  INT     scalar          scalar const perma   l  2.000E+00  
+ 46        dumptype CHAR     scalar          scalar const perma   l binary      
+ 47         velname CHAR     scalar          scalar const perma   l vels        
+ 48        densname CHAR     scalar          scalar const perma   l ric         
+ 49        presname CHAR     scalar          scalar const perma   l pic         
+ 50        enername CHAR     scalar          scalar const perma   l eic         
+ 51            xmin REAL     scalar          scalar const perma   l -2.000E-01  
+ 52            ymin REAL     scalar          scalar const perma   l  0.000E+00  
+ 53            zmin REAL     scalar          scalar const perma   l  0.000E+00  
+ 54            xmax REAL     scalar          scalar const perma   l  1.000E+01  
+ 55            ymax REAL     scalar          scalar const perma   l  1.000E+00  
+ 56            zmax REAL     scalar          scalar const perma   l  0.000E+00  
+ 57    kdtree_level  INT     scalar          scalar const perma   l  0.000E+00  
+ 58 max_number_sets  INT     scalar          scalar const perma   l  6.400E+01  
+ 59 number_of_psets  INT     scalar          scalar const perma   l  0.000E+00  
+ 60 number_of_eltse  INT     scalar          scalar const perma   l  0.000E+00  
+ 61       psetnames VCHA     scalar max_number_sets const perma   l             
+ 62     eltsetnames VCHA     scalar max_number_sets const perma   l             
+ 63       geom_name CHAR     scalar max_number_sets const perma   l -defaultge  
+ 64       fsetnames VCHA     scalar max_number_sets const perma   l             
+ 65 number_of_fsets  INT     scalar          scalar const perma   l  0.000E+00  
+dump/avs/output_tri1b_recon1.inp/mo                                             
+cmo/modatt/-def-/-def-/ioflag/x                                                 
+finish                                                                          
+cmo select mo                                                                   
+quality                                                                         
+         0 total elements in mesh.                                              
+ 
+cmo/delete/mo                                                                   
+     Released Mesh Object: mo                                                   
+##############################################                                  
+# read dfn triangulation with 2956 elements                                     
+# this mesh was causing recon 1 to seg fault                                    
+read/avs/input_tri_dfn.inp/mo                                                   
+cmo/addatt/mo/dfield/VDOUBLE/scalar/nnodes/linear/permanent/gxaf/0.0            
+finish                                                                          
+cmo/addatt/mo/a_b/VINT/scalar/nnodes/linear/permanent/gxaf/0.0                  
+finish                                                                          
+cmo/addatt/mo/b_a/VINT/scalar/nnodes/linear/permanent/gxaf/0.0                  
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+cmo/status/brief                                                                
+ 
+The current-mesh-object(CMO) is: mo                                             
+ 
+  1 Mesh Object name: mo                                                        
+    number of nodes =          2956        number of elements =         5773    
+    dimensions geometry =         3        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+ 
+finish                                                                          
+resetpts/itp                                                                    
+geniee                                                                          
+finish                                                                          
+quality/aspect/y                                                                
+cmo/addatt//aratio/VDOUBLE/scalar/nelements                                     
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   1.6715512E-12  4.6704537E-36                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :         17                          
+elements with aspect ratio b/w .5  and 1. :       5756                          
+min aspect ratio =  0.3877E+00  max aspect ratio =  0.1000E+01                  
+-----------------------------------------------------------                     
+      5773 total elements evaluated.                                            
+ 
+dump stor output_dfn mo                                                         
+***Construct Regular Sparse Matrix:2D***                                        
+Matbldtri: total neg       54 mincoef=  -2.3316052E-01 maxcoef=   4.6402032E+00 
+Negative coeff2d:        sort   edge     vor_coeff        row_node  col_node    
+Negative coeff2d:          1      1829 -2.3316052E-01      2761      2760       
+Negative coeff2d:          2       897 -2.2690925E-01      2890      2524       
+Negative coeff2d:          3       363 -4.2561497E-03      2256      1818       
+Negative coeff2d:          4        18 -5.3286806E-02      2954      2955       
+Negative coeff2d:          5        38 -1.7974104E-01      2953      2310       
+Negative coeff2d:          6      1281 -4.8179757E-03      2693      2694       
+Negative coeff2d:          7      1393 -5.1989172E-03      2563      1429       
+Negative coeff2d:          8        56 -5.6259431E-02       623       282       
+Negative coeff2d:          9       978 -6.3032900E-02      2893      2539       
+Negative coeff2d:         10        75 -6.4255289E-02      2070       303       
+Negative coeff2d:         11        98 -2.8692566E-02      2939      2388       
+Negative coeff2d:         12      2783 -1.9531628E-02      2413      1418       
+Negative coeff2d:         13       600 -1.7488729E-02       176       733       
+Negative coeff2d:         14       115 -1.3843637E-01      2934       758       
+Negative coeff2d:         15      1313 -5.7906301E-03      2854      2853       
+Negative coeff2d:         16       130 -1.7178622E-01      2937      2146       
+Negative coeff2d:         17      1493 -2.7462195E-02      2837       368       
+Negative coeff2d:         18      1538 -1.6261131E-02       175       634       
+Negative coeff2d:         19       912 -1.0625947E-01      2731      2732       
+Negative coeff2d:         20       416 -1.1878850E-01      2887      1491       
+Negative coeff2d:         21       451 -6.6206687E-02      2923      2546       
+Negative coeff2d:         22      1039 -4.0173636E-02      2414      2550       
+Negative coeff2d:         23       473 -4.6598891E-02      2889      2524       
+Negative coeff2d:         24      1136 -3.4181729E-02      1873      1372       
+Negative coeff2d:         25       518 -6.7374846E-02      2885      2886       
+Negative coeff2d:         26      1192 -2.4091154E-02      2815      2816       
+Negative coeff2d:         27      1207 -6.3372121E-02      1216       840       
+Negative coeff2d:         28      1241 -2.8471978E-02      2913      2914       
+Negative coeff2d:         29       617 -1.2918337E-02      2923      2226       
+Negative coeff2d:         30      1291 -1.1189235E-02      1955      2017       
+------------                                                                    
+Matbldtri                                                                       
+Number of Nodes             =       2956                                        
+Max. Connection to a Node   =          2                                        
+Number of Area Coefficients =       2972                                        
+Minimum Voronoi area        =   1.2890083E-03                                   
+Maximum Voronoi area        =   7.5937659E-02                                   
+Minimum Voronoi edge length =  -2.3316052E-01                                   
+Maximum Voronoi edge length =   4.6402032E+00                                   
+Total   Voronoi area        =   2.1639800E+01                                   
+Total   Triangle area       =   2.1639800E+01                                   

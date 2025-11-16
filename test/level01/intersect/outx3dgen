@@ -1,0 +1,468 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:11          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+# Test the sorting changes to the intersect command. In particular, these tests 
+# should make sure that sort / / line_graph is run properly on the result of the
+# surface intersection.                                                         
+# Note: The test segfaults toward the end, apparently due to a pre-existing bug 
+# in LaGriT. This should eventually be fixed.                                   
+# Input files:                                                                  
+#   test02.inp - a sinusoidal surface                                           
+# Output files:                                                                 
+#   Test 01 - intersection of two planes                                        
+#   Test 02 - intersect plane and a sinusoidal surface                          
+#   Test 03 - intersect elements                                                
+# Create input meshes                                                           
+cmo/create/mo_s1///triplane                                                     
+createpts/xyz/11 11 1/0. 0. 0./1. 1. 1./1 1 1                                   
+  RZ GENERATED POINTS                    1 TO                  121              
+cmo/setatt/mo_s1/imt 1                                                          
+Warning: nelements = 0                                                          
+       121 values reset for attribute imt1                                      
+ 
+connect                                                                         
+ Coordinates of enclosing triangle are:                                         
+          -0.17500D+01-0.16000D+01 0.50000D+00                                  
+           0.27500D+01-0.17500D+01 0.50000D+00                                  
+           0.50500D+00 0.50000D+01 0.50000D+00                                  
+                    Warning from: delaunay2d                        nlstptl is 0
+ 
+ Successfully eliminated all multimaterial connections.                         
+ 
+ The mesh is now complete!                                                      
+ 
+LaGriT FINISH: connect                                                          
+ 
+LaGriT WARNING: connect finished with 0 elements                                
+ 
+cmo/setatt/mo_s1/itetclr 1                                                      
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+resetpts/itp                                                                    
+geniee                                                                          
+geniee_cmo warning: no elements with faces so no jtet                           
+finish                                                                          
+# Make a copy of the mesh and rotate it about a line.                           
+cmo/copy/mo_s2/mo_s1                                                            
+cmo select mo_s2                                                                
+rotateln/1 0 0/nocopy/.5 -1.0 0.0/.6 2.0 0.0/45.0                               
+cmo/printatt/mo_s1/-xyz-/minmax                                                 
+Warning: nelements = 0                                                          
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ xic                0.000000000E+00  1.000000000E+00 1.000000000E+00       121  
+ yic                0.000000000E+00  1.000000000E+00 1.000000000E+00       121  
+ zic                5.000000000E-01  5.000000000E-01 0.000000000E+00       121  
+ 
+cmo/printatt/mo_s2/-xyz-/minmax                                                 
+Warning: nelements = 0                                                          
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ xic                5.093934786E-01  1.226577607E+00 7.171841283E-01       121  
+ yic               -1.697978262E-02  9.924474131E-01 1.009427196E+00       121  
+ zic                2.375339739E-02  7.540248109E-01 7.302714135E-01       121  
+ 
+# Test 01                                                                       
+# Intersect the two meshes. Afterward mo_line should have its edges sorted and  
+# should have attributes cid, ctype, and loop_id set properly.                  
+# output single line                                                            
+intersect/mo_line/mo_s1/mo_s2                                                   
+Nothing found for new mesh object.                                              
+ ERROR SORT: mesh object has 0 elements.                                        
+ 
+reorder/mo_line/line_sort_key                                                   
+REORDER: ERROR, sort key invalid or 0 length.                                   
+finish                                                                          
+cmo/delatt/mo_line/line_sort_key                                                
+ERROR cmo_delatt_cmo: mo_line Attribute does not exist: line_sort_key           
+ ERROR CMO: delatt  mo_line     -1                                              
+ 
+error in command : cmo/delatt/mo_line/line_sort_key                             
+finish                                                                          
+cmo/status                                                                      
+ 
+The current-mesh-object(CMO) is: mo_line                                        
+ 
+  1 Mesh Object name: mo_s1                                                     
+    number of nodes =           121        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                 inactive    
+ 
+          NAME     TYPE     RANK        LENGTH      INTER PERSI IO   VALUE      
+ 
+  1           -def- VDOU     scalar          nnodes linea tempo agl  0.000E+00  
+  2          scalar  INT     scalar          scalar const perma   l  1.000E+00  
+  3          vector  INT     scalar          scalar const perma   l  3.000E+00  
+  4          nnodes  INT     scalar          scalar const perma   l  1.210E+02  
+  5          nedges  INT     scalar          scalar const perma   l  0.000E+00  
+  6          nfaces  INT     scalar          scalar const perma   l  0.000E+00  
+  7       nelements  INT     scalar          scalar const perma   l  0.000E+00  
+  8          mbndry  INT     scalar          scalar const perma   l  1.600E+07  
+  9 ndimensions_top  INT     scalar          scalar const perma   l  2.000E+00  
+ 10 ndimensions_geo  INT     scalar          scalar const perma   l  2.000E+00  
+ 11 nodes_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 12 edges_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 13 faces_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 14          isetwd VDOU     scalar          nnodes    or perma   l  0.000E+00  
+ 15          ialias VINT     scalar          nnodes seque perma   l  0.000E+00  
+ 16            imt1 VINT     scalar          nnodes   max perma gal  0.000E+00  
+ 17            itp1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 18            icr1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 19            isn1 VINT     scalar          nnodes  user perma gal  0.000E+00  
+ 20             xic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 21             yic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 22             zic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 23          xtetwd VDOU     scalar       nelements    or perma   l  0.000E+00  
+ 24         itetclr VINT     scalar       nelements  user perma   l  0.000E+00  
+ 25         itettyp VINT     scalar       nelements  user perma   l  0.000E+00  
+ 26         itetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 27         jtetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 28            itet VINT nodes_per_       nelements  user perma   l  0.000E+00  
+ 29            jtet VINT faces_per_       nelements  user perma   l  0.000E+00  
+ 30        ipolydat CHAR     scalar          scalar const perma   l no          
+ 31           vor2d CHAR     scalar          scalar const perma   l yes         
+ 32           vor3d CHAR     scalar          scalar const perma   l no          
+ 33         epsilon REAL     scalar          scalar const perma   l  1.000E-15  
+ 34        epsilonl REAL     scalar          scalar const perma   l  3.140E-13  
+ 35        epsilona REAL     scalar          scalar const perma   l  4.441E-13  
+ 36        epsilonv REAL     scalar          scalar const perma   l  4.441E-13  
+ 37         ipointi  INT     scalar          scalar const perma   l  1.210E+02  
+ 38         ipointj  INT     scalar          scalar const perma   l  1.210E+02  
+ 39          idebug  INT     scalar          scalar const perma   l  0.000E+00  
+ 40     itypconv_sm  INT     scalar          scalar const perma   l  1.000E+00  
+ 41      maxiter_sm  INT     scalar          scalar const perma   l  2.500E+01  
+ 42      tolconv_sm REAL     scalar          scalar const perma   l  1.000E+00  
+ 43          nnfreq  INT     scalar          scalar const perma   l  1.000E+00  
+ 44        ivoronoi  INT     scalar          scalar const perma   l  1.000E+00  
+ 45        iopt2to2  INT     scalar          scalar const perma   l  2.000E+00  
+ 46        dumptype CHAR     scalar          scalar const perma   l binary      
+ 47         velname CHAR     scalar          scalar const perma   l vels        
+ 48        densname CHAR     scalar          scalar const perma   l ric         
+ 49        presname CHAR     scalar          scalar const perma   l pic         
+ 50        enername CHAR     scalar          scalar const perma   l eic         
+ 51            xmin REAL     scalar          scalar const perma   l  0.000E+00  
+ 52            ymin REAL     scalar          scalar const perma   l  0.000E+00  
+ 53            zmin REAL     scalar          scalar const perma   l  5.000E-01  
+ 54            xmax REAL     scalar          scalar const perma   l  1.000E+00  
+ 55            ymax REAL     scalar          scalar const perma   l  1.000E+00  
+ 56            zmax REAL     scalar          scalar const perma   l  5.000E-01  
+ 57    kdtree_level  INT     scalar          scalar const perma   l  0.000E+00  
+ 58 max_number_sets  INT     scalar          scalar const perma   l  6.400E+01  
+ 59 number_of_psets  INT     scalar          scalar const perma   l  0.000E+00  
+ 60 number_of_eltse  INT     scalar          scalar const perma   l  0.000E+00  
+ 61       psetnames VCHA     scalar max_number_sets const perma   l             
+ 62     eltsetnames VCHA     scalar max_number_sets const perma   l             
+ 63       geom_name CHAR     scalar max_number_sets const perma   l -defaultge  
+ 64       fsetnames VCHA     scalar max_number_sets const perma   l             
+ 65 number_of_fsets  INT     scalar          scalar const perma   l  0.000E+00  
+ 
+  2 Mesh Object name: mo_s2                                                     
+    number of nodes =           121        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                 inactive    
+ 
+          NAME     TYPE     RANK        LENGTH      INTER PERSI IO   VALUE      
+ 
+  1           -def- VDOU     scalar          nnodes linea tempo agl  0.000E+00  
+  2          scalar  INT     scalar          scalar const perma   l  1.000E+00  
+  3          vector  INT     scalar          scalar const perma   l  3.000E+00  
+  4          nnodes  INT     scalar          scalar const perma   l  1.210E+02  
+  5          nedges  INT     scalar          scalar const perma   l  0.000E+00  
+  6          nfaces  INT     scalar          scalar const perma   l  0.000E+00  
+  7       nelements  INT     scalar          scalar const perma   l  0.000E+00  
+  8          mbndry  INT     scalar          scalar const perma   l  1.600E+07  
+  9 ndimensions_top  INT     scalar          scalar const perma   l  2.000E+00  
+ 10 ndimensions_geo  INT     scalar          scalar const perma   l  2.000E+00  
+ 11 nodes_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 12 edges_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 13 faces_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 14          isetwd VDOU     scalar          nnodes    or perma   l  0.000E+00  
+ 15          ialias VINT     scalar          nnodes seque perma   l  0.000E+00  
+ 16            imt1 VINT     scalar          nnodes   max perma gal  0.000E+00  
+ 17            itp1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 18            icr1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 19            isn1 VINT     scalar          nnodes  user perma gal  0.000E+00  
+ 20             xic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 21             yic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 22             zic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 23          xtetwd VDOU     scalar       nelements    or perma   l  0.000E+00  
+ 24         itetclr VINT     scalar       nelements  user perma   l  0.000E+00  
+ 25         itettyp VINT     scalar       nelements  user perma   l  0.000E+00  
+ 26         itetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 27         jtetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 28            itet VINT nodes_per_       nelements  user perma   l  0.000E+00  
+ 29            jtet VINT faces_per_       nelements  user perma   l  0.000E+00  
+ 30        ipolydat CHAR     scalar          scalar const perma   l no          
+ 31           vor2d CHAR     scalar          scalar const perma   l yes         
+ 32           vor3d CHAR     scalar          scalar const perma   l no          
+ 33         epsilon REAL     scalar          scalar const perma   l  1.000E-15  
+ 34        epsilonl REAL     scalar          scalar const perma   l  3.140E-13  
+ 35        epsilona REAL     scalar          scalar const perma   l  4.441E-13  
+ 36        epsilonv REAL     scalar          scalar const perma   l  4.441E-13  
+ 37         ipointi  INT     scalar          scalar const perma   l  1.210E+02  
+ 38         ipointj  INT     scalar          scalar const perma   l  1.210E+02  
+ 39          idebug  INT     scalar          scalar const perma   l  0.000E+00  
+ 40     itypconv_sm  INT     scalar          scalar const perma   l  1.000E+00  
+ 41      maxiter_sm  INT     scalar          scalar const perma   l  2.500E+01  
+ 42      tolconv_sm REAL     scalar          scalar const perma   l  1.000E+00  
+ 43          nnfreq  INT     scalar          scalar const perma   l  1.000E+00  
+ 44        ivoronoi  INT     scalar          scalar const perma   l  1.000E+00  
+ 45        iopt2to2  INT     scalar          scalar const perma   l  2.000E+00  
+ 46        dumptype CHAR     scalar          scalar const perma   l binary      
+ 47         velname CHAR     scalar          scalar const perma   l vels        
+ 48        densname CHAR     scalar          scalar const perma   l ric         
+ 49        presname CHAR     scalar          scalar const perma   l pic         
+ 50        enername CHAR     scalar          scalar const perma   l eic         
+ 51            xmin REAL     scalar          scalar const perma   l  0.000E+00  
+ 52            ymin REAL     scalar          scalar const perma   l  0.000E+00  
+ 53            zmin REAL     scalar          scalar const perma   l  5.000E-01  
+ 54            xmax REAL     scalar          scalar const perma   l  1.000E+00  
+ 55            ymax REAL     scalar          scalar const perma   l  1.000E+00  
+ 56            zmax REAL     scalar          scalar const perma   l  5.000E-01  
+ 57    kdtree_level  INT     scalar          scalar const perma   l  0.000E+00  
+ 58 max_number_sets  INT     scalar          scalar const perma   l  6.400E+01  
+ 59 number_of_psets  INT     scalar          scalar const perma   l  0.000E+00  
+ 60 number_of_eltse  INT     scalar          scalar const perma   l  0.000E+00  
+ 61       psetnames VCHA     scalar max_number_sets const perma   l             
+ 62     eltsetnames VCHA     scalar max_number_sets const perma   l             
+ 63       geom_name CHAR     scalar max_number_sets const perma   l -defaultge  
+ 64       fsetnames VCHA     scalar max_number_sets const perma   l             
+ 65 number_of_fsets  INT     scalar          scalar const perma   l  0.000E+00  
+ERROR: Unrecognized Mesh Type nen,nef,nee:    2   2   3                         
+ 
+  3 Mesh Object name: mo_line                                                   
+    number of nodes =           242        number of elements =            0    
+    dimensions geometry =         3        element type =                not    
+    dimensions topology =         1        2 nodes      2 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+          NAME     TYPE     RANK        LENGTH      INTER PERSI IO   VALUE      
+ 
+  1           -def- VDOU     scalar          nnodes linea tempo agl  0.000E+00  
+  2          scalar  INT     scalar          scalar const perma   l  1.000E+00  
+  3          vector  INT     scalar          scalar const perma   l  3.000E+00  
+  4          nnodes  INT     scalar          scalar const perma   l  2.420E+02  
+  5          nedges  INT     scalar          scalar const perma   l  0.000E+00  
+  6          nfaces  INT     scalar          scalar const perma   l  0.000E+00  
+  7       nelements  INT     scalar          scalar const perma   l  0.000E+00  
+  8          mbndry  INT     scalar          scalar const perma   l  1.600E+07  
+  9 ndimensions_top  INT     scalar          scalar const perma   l  1.000E+00  
+ 10 ndimensions_geo  INT     scalar          scalar const perma   l  3.000E+00  
+ 11 nodes_per_eleme  INT     scalar          scalar const perma   l  2.000E+00  
+ 12 edges_per_eleme  INT     scalar          scalar const perma   l  3.000E+00  
+ 13 faces_per_eleme  INT     scalar          scalar const perma   l  2.000E+00  
+ 14          isetwd VDOU     scalar          nnodes    or perma   l  0.000E+00  
+ 15          ialias VINT     scalar          nnodes seque perma   l  0.000E+00  
+ 16            imt1 VINT     scalar          nnodes   max perma gal  0.000E+00  
+ 17            itp1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 18            icr1 VINT     scalar          nnodes   min perma gal  0.000E+00  
+ 19            isn1 VINT     scalar          nnodes  user perma gal  0.000E+00  
+ 20             xic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 21             yic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 22             zic VDOU     scalar          nnodes linea perma   l  0.000E+00  
+ 23          xtetwd VDOU     scalar       nelements    or perma   l  0.000E+00  
+ 24         itetclr VINT     scalar       nelements  user perma   l  0.000E+00  
+ 25         itettyp VINT     scalar       nelements  user perma   l  0.000E+00  
+ 26         itetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 27         jtetoff VINT     scalar       nelements  user perma   l  0.000E+00  
+ 28            itet VINT nodes_per_       nelements  user perma   l  0.000E+00  
+ 29            jtet VINT faces_per_       nelements  user perma   l  0.000E+00  
+ 30        ipolydat CHAR     scalar          scalar const perma   l no          
+ 31           vor2d CHAR     scalar          scalar const perma   l yes         
+ 32           vor3d CHAR     scalar          scalar const perma   l no          
+ 33         epsilon REAL     scalar          scalar const perma   l  1.000E-15  
+ 34        epsilonl REAL     scalar          scalar const perma   l  3.140E-13  
+ 35        epsilona REAL     scalar          scalar const perma   l  4.441E-13  
+ 36        epsilonv REAL     scalar          scalar const perma   l  4.441E-13  
+ 37         ipointi  INT     scalar          scalar const perma   l  1.210E+02  
+ 38         ipointj  INT     scalar          scalar const perma   l  1.210E+02  
+ 39          idebug  INT     scalar          scalar const perma   l  0.000E+00  
+ 40     itypconv_sm  INT     scalar          scalar const perma   l  1.000E+00  
+ 41      maxiter_sm  INT     scalar          scalar const perma   l  2.500E+01  
+ 42      tolconv_sm REAL     scalar          scalar const perma   l  1.000E+00  
+ 43          nnfreq  INT     scalar          scalar const perma   l  1.000E+00  
+ 44        ivoronoi  INT     scalar          scalar const perma   l  1.000E+00  
+ 45        iopt2to2  INT     scalar          scalar const perma   l  2.000E+00  
+ 46        dumptype CHAR     scalar          scalar const perma   l binary      
+ 47         velname CHAR     scalar          scalar const perma   l vels        
+ 48        densname CHAR     scalar          scalar const perma   l ric         
+ 49        presname CHAR     scalar          scalar const perma   l pic         
+ 50        enername CHAR     scalar          scalar const perma   l eic         
+ 51            xmin REAL     scalar          scalar const perma   l  0.000E+00  
+ 52            ymin REAL     scalar          scalar const perma   l  0.000E+00  
+ 53            zmin REAL     scalar          scalar const perma   l  5.000E-01  
+ 54            xmax REAL     scalar          scalar const perma   l  1.000E+00  
+ 55            ymax REAL     scalar          scalar const perma   l  1.000E+00  
+ 56            zmax REAL     scalar          scalar const perma   l  5.000E-01  
+ 57    kdtree_level  INT     scalar          scalar const perma   l  0.000E+00  
+ 58 max_number_sets  INT     scalar          scalar const perma   l  6.400E+01  
+ 59 number_of_psets  INT     scalar          scalar const perma   l  0.000E+00  
+ 60 number_of_eltse  INT     scalar          scalar const perma   l  0.000E+00  
+ 61       psetnames VCHA     scalar max_number_sets const perma   l             
+ 62     eltsetnames VCHA     scalar max_number_sets const perma   l             
+ 63       geom_name CHAR     scalar max_number_sets const perma   l -defaultge  
+ 64       fsetnames VCHA     scalar max_number_sets const perma   l             
+ 65 number_of_fsets  INT     scalar          scalar const perma   l  0.000E+00  
+* dump / avs / output_test01.inp / mo_line / 1 1 0 0                            
+# Create input mesh for Test 02                                                 
+cmo/create/mo_plane///triplane                                                  
+createpts/xyz/11 11 1/0. 0. 0./10. 20. 0./1 1 1                                 
+  RZ GENERATED POINTS                    1 TO                  121              
+cmo/setatt/mo_plane imt 1                                                       
+Warning: nelements = 0                                                          
+       121 values reset for attribute imt1                                      
+ 
+connect                                                                         
+ Coordinates of enclosing triangle are:                                         
+          -0.17500D+02-0.32000D+02 0.00000D+00                                  
+           0.27500D+02-0.35000D+02 0.00000D+00                                  
+           0.50500D+01 0.10000D+03 0.00000D+00                                  
+                    Warning from: delaunay2d                        nlstptl is 0
+ Cannot locate interface between points      4064 and      4064.                
+ 
+ Successfully eliminated all multimaterial connections.                         
+ 
+ The mesh is now complete!                                                      
+ 
+LaGriT FINISH: connect                                                          
+ 
+LaGriT WARNING: connect finished with 0 elements                                
+ 
+cmo/setatt/mo1/itetclr 1                                                        
+Warning: MO DOES NOT EXIST: mo1                                                 
+Warning: NO ACTION: setatt                                                      
+cmo_command: RETURN                                                             
+resetpts/itp                                                                    
+geniee                                                                          
+geniee_cmo warning: no elements with faces so no jtet                           
+finish                                                                          
+* dump input_sheet2.inp mo_plane                                                
+# read input mesh for Test 02                                                   
+read/input_test02.inp/mo_surf                                                   
+read/avs/input_test02.inp/mo_surf                                               
+cmo/addatt/mo_surf/var1/VDOUBLE/scalar/nnodes/linear/permanent/gxaf/0.0         
+finish                                                                          
+cmo/addatt/mo_surf/var2/VDOUBLE/scalar/nnodes/linear/permanent/gxaf/0.0         
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+cmo/status/brief                                                                
+ 
+The current-mesh-object(CMO) is: mo_surf                                        
+ 
+  1 Mesh Object name: mo_s1                                                     
+    number of nodes =           121        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                 inactive    
+ 
+  2 Mesh Object name: mo_s2                                                     
+    number of nodes =           121        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                 inactive    
+ERROR: Unrecognized Mesh Type nen,nef,nee:    2   2   3                         
+ 
+  3 Mesh Object name: mo_line                                                   
+    number of nodes =           242        number of elements =            0    
+    dimensions geometry =         3        element type =                not    
+    dimensions topology =         1        2 nodes      2 faces      3 edges    
+    boundary flag =        16000000        status =                 inactive    
+ 
+  4 Mesh Object name: mo_plane                                                  
+    number of nodes =           121        number of elements =            0    
+    dimensions geometry =         2        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                 inactive    
+ 
+  5 Mesh Object name: mo_surf                                                   
+    number of nodes =          1661        number of elements =         3200    
+    dimensions geometry =         3        element type =                tri    
+    dimensions topology =         2        3 nodes      3 faces      3 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+ 
+finish                                                                          
+finish                                                                          
+cmo/printatt/mo_plane/-xyz-/minmax                                              
+Warning: nelements = 0                                                          
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ xic                0.000000000E+00  1.000000000E+01 1.000000000E+01       121  
+ yic                0.000000000E+00  2.000000000E+01 2.000000000E+01       121  
+ zic                0.000000000E+00  0.000000000E+00 0.000000000E+00       121  
+ 
+cmo/printatt/mo_surf/-xyz-/minmax                                               
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ xic                0.000000000E+00  1.000000000E+01 1.000000000E+01      1661  
+ yic                0.000000000E+00  2.000000000E+01 2.000000000E+01      1661  
+ zic               -3.997758627E-01  3.989979923E-01 7.987738550E-01      1661  
+ 
+# Test 02                                                                       
+# Intersect with sinusoidal surface                                             
+# Check attributes (see image)                                                  
+# output multiple lines                                                         
+intersect/mo_lines/mo_plane/mo_surf                                             
+Nothing found for new mesh object.                                              
+ Default line_graph option: using "elements"                                    
+cmo/addatt/mo_lines/line_sort_key/vint/scalar/nelements///gax/0                 
+ERROR: Unrecognized Mesh Type nen,nef,nee:    2   2   3                         
+finish                                                                          
+  ERROR SORT: line_graph elements must be of type line.                         
+ INTERSECT: ERROR - something went wrong sorting the output.                    
+error in command : finish                                                       
+cmo/printatt/mo_lines/cid minmax                                                
+ cannot attribute cid in mo_lines                                               
+cmo/printatt/mo_lines/ctype minmax                                              
+ cannot attribute ctype in mo_lines                                             
+cmo/printatt/mo_lines/loopid minmax                                             
+ cannot attribute loopid in mo_lines                                            
+* dump / output_test02.inp / mo_lines                                           
+# Test 03                                                                       
+# find intersected elements                                                     
+intersect_elements/mo_s1/mo_s2/xsect                                            
+Warning: mo_s1 has no elements for intersect.                                   
+Warning: mo_s2 has no elements for intersect.                                   
+intersect_elements exiting with no search.                                      
+ 
+cmo/select/mo_s1                                                                
+eltset/e_obj/xsect/gt/0                                                         
+ 
+Attribute xsect      not found in mesh object mo_s1                             
+ 
+cmo/setatt/mo_s1/itetclr/eltset,get,e_obj 2                                     
+Warning: nelements = 0                                                          
+ 0 length attribute: itetclr                                                    
+ 
+* dump/ output_test03.inp / mo_s1                                               
+finish                                                                          
+LaGriT successfully completed                                                   

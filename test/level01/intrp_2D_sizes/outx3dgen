@@ -1,0 +1,59 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:11          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+* Test interpolate 2D                                                           
+* examines precision with small numbers                                         
+* includes fix to V2 issues with interpolate                                    
+* output files written for important cases                                      
+*                                                                               
+define/SIZE_SRCX/21                                                             
+define/SIZE_SRCY/101                                                            
+define/SIZE_SNKX/20                                                             
+define/SIZE_SNKY/100                                                            
+* Build a source simple 2d triangular mesh                                      
+cmo/create/cmosource///triplane                                                 
+createpts/xyz/SIZE_SRCX,SIZE_SRCY,1/0.,0.,0./1.,1.,0./1,1,1                     
+  RZ GENERATED POINTS                    1 TO                 2121              
+cmo/setatt/cmosource/imt/1 0 0/1                                                
+Warning: nelements = 0                                                          
+      2121 values reset for attribute imt1                                      
+ 
+cmo/setatt/cmosource/itp/1 0 0/0                                                
+Warning: nelements = 0                                                          
+      2121 values reset for attribute itp1                                      
+ 
+connect                                                                         
+ Coordinates of enclosing triangle are:                                         
+          -0.17500D+01-0.16000D+01 0.00000D+00                                  
+           0.27500D+01-0.17500D+01 0.00000D+00                                  
+           0.50500D+00 0.50000D+01 0.00000D+00                                  
+                    Warning from: delaunay2d                        nlstptl is 0

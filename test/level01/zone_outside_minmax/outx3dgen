@@ -1,0 +1,62 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:20          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+* test outside zones based on normal direction                                  
+* restrict to minmax of each row/col direction                                  
+* top, bottom, front, back, left, right                                         
+* test voronoi version                                                          
+read avs input_chunk.inp cmo1                                                   
+cmo/addatt/cmo1/id_node/VDOUBLE/scalar/nnodes/linear/permanent/gxaf/0.0         
+finish                                                                          
+cmo/addatt/cmo1/matclr/VDOUBLE/scalar/nelements/linear/permanent/gxaf/0.0       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+cmo/status/brief                                                                
+ 
+The current-mesh-object(CMO) is: cmo1                                           
+ 
+  1 Mesh Object name: cmo1                                                      
+    number of nodes =         19495        number of elements =        99144    
+    dimensions geometry =         3        element type =                tet    
+    dimensions topology =         3        4 nodes      4 faces      6 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+ 
+finish                                                                          
+resetpts itp                                                                    
+geniee                                                                          
+finish                                                                          
+cmo/setatt/cmo1/idebug 9                                                        
+         1 values reset for attribute idebug                                    
+ 
+dump/zone_outside_minmax/output/cmo1 keepatt keepatt_voronoi                    
