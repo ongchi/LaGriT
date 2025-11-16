@@ -14,7 +14,7 @@ C
 C ######################################################################
 C
       implicit none
-      integer, intent(in) :: i1, i2
+      integer, intent(in) :: i1, i2, value
 
       if (value >= 0) then
          cvmgpr = i1
