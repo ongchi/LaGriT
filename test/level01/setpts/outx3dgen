@@ -1,0 +1,108 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:15          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+* Test setpts and settets and geometry                                          
+* it makes a geometry with 10 regions                                           
+cmo/create/abc                                                                  
+* geometry made up of 6 bounding planes and one                                 
+* interface planes to divide into 10 regions                                    
+surface/pbot/reflect/plane/0,0,0/1,0,0/1,1,0/                                   
+  The unit vector for pbot     is  0.0000000i   0.0000000j   1.0000000k         
+cmo/addatt//ncon50/INT/scalar/scalar/constant/permanent/l/0                     
+finish                                                                          
+cmo/addatt//nconbnd/INT/scalar/scalar/constant/permanent/l/0                    
+finish                                                                          
+cmo/addatt//icontab/VINT/scalar/ncon50/constant/permanent/l/0.0                 
+finish                                                                          
+surface/ptop/reflect/plane/0,0,1/1,0,1/1,1,1/                                   
+  The unit vector for ptop     is  0.0000000i   0.0000000j   1.0000000k         
+surface/prgt/reflect/plane/1,0,0/1,1,0/1,1,1/                                   
+  The unit vector for prgt     is  1.0000000i   0.0000000j   0.0000000k         
+surface/plft/reflect/plane/0,0,0/0,1,0/0,1,1/                                   
+  The unit vector for plft     is  1.0000000i   0.0000000j   0.0000000k         
+surface/pfrt/reflect/plane/0,0,0/1,0,0/1,0,1/                                   
+  The unit vector for pfrt     is  0.0000000i  -1.0000000j   0.0000000k         
+surface/pbck/reflect/plane/0,1,0/1,1,0/1,1,1/                                   
+  The unit vector for pbck     is  0.0000000i  -1.0000000j   0.0000000k         
+surface/p5/intrface/plane/0,0,.5/1,0,.5/1,1,.5/                                 
+  The unit vector for p5       is  0.0000000i   0.0000000j   1.0000000k         
+surface/p1/intrface/plane/0,0,.1/1,0,.1/1,1,.1/                                 
+  The unit vector for p1       is  0.0000000i   0.0000000j   1.0000000k         
+surface/p2/intrface/plane/0,0,.2/1,0,.2/1,1,.2/                                 
+  The unit vector for p2       is  0.0000000i   0.0000000j   1.0000000k         
+surface/p3/intrface/plane/0,0,.3/1,0,.3/1,1,.3/                                 
+  The unit vector for p3       is  0.0000000i   0.0000000j   1.0000000k         
+surface/p4/intrface/plane/0,0,.4/1,0,.4/1,1,.4/                                 
+  The unit vector for p4       is  0.0000000i   0.0000000j   1.0000000k         
+surface/p6/intrface/plane/0,0,.6/1,0,.6/1,1,.6/                                 
+  The unit vector for p6       is  0.0000000i   0.0000000j   1.0000000k         
+surface/p7/intrface/plane/0,0,.7/1,0,.7/1,1,.7/                                 
+  The unit vector for p7       is  0.0000000i   0.0000000j   1.0000000k         
+surface/p8/intrface/plane/0,0,.8/1,0,.8/1,1,.8/                                 
+  The unit vector for p8       is  0.0000000i   0.0000000j   1.0000000k         
+surface/p9/intrface/plane/0,0,.9/1,0,.9/1,1,.9/                                 
+  The unit vector for p9       is  0.0000000i   0.0000000j   1.0000000k         
+*define geometric regions                                                       
+region/top/le ptop and ge plft and le prgt and ge pbck and le pfrt and ge p9/   
+region/bot/ge pbot and ge plft and le prgt and ge pbck and le pfrt and lt p1/   
+region/r2/ge p1 and ge plft and le prgt and ge pbck and le pfrt and lt p2/      
+region/r3/ge p2 and ge plft and le prgt and ge pbck and le pfrt and lt p3/      
+region/r4/ge p3 and ge plft and le prgt and ge pbck and le pfrt and lt p4/      
+region/r5/ge p4 and ge plft and le prgt and ge pbck and le pfrt and lt p5/      
+region/r6/ge p5 and ge plft and le prgt and ge pbck and le pfrt and lt p6/      
+region/r7/ge p6 and ge plft and le prgt and ge pbck and le pfrt and lt p7/      
+region/r8/ge p7 and ge plft and le prgt and ge pbck and le pfrt and lt p8/      
+region/r9/ge p8 and ge plft and le prgt and ge pbck and le pfrt and lt p9/      
+* define material regions                                                       
+mregion/mtop/le ptop and ge plft and le prgt and ge pbck and le pfrt and gt p9/ 
+mregion/mbot/ge pbot and ge plft and le prgt and ge pbck and le pfrt and lt p1/ 
+mregion/mr2/gt p1 and ge plft and le prgt and ge pbck and le pfrt and lt p2/    
+mregion/mr3/gt p2 and ge plft and le prgt and ge pbck and le pfrt and lt p3/    
+mregion/mr4/gt p3 and ge plft and le prgt and ge pbck and le pfrt and lt p4/    
+mregion/mr5/gt p4 and ge plft and le prgt and ge pbck and le pfrt and lt p5/    
+mregion/mr6/gt p5 and ge plft and le prgt and ge pbck and le pfrt and lt p6/    
+mregion/mr7/gt p6 and ge plft and le prgt and ge pbck and le pfrt and lt p7/    
+mregion/mr8/gt p7 and ge plft and le prgt and ge pbck and le pfrt and lt p8/    
+mregion/mr9/gt p8 and ge plft and le prgt and ge pbck and le pfrt and lt p9/    
+createpts/xyz/6,6,41/0,0,0/1,1,1/1,1,1                                          
+  RZ GENERATED POINTS                    1 TO                 1476              
+setpts                                                                          
+ FOR icr   1 TYPE surface    1   0   0 THERE ARE       16 POINTS                
+ FOR icr   2 TYPE surface    2   0   0 THERE ARE       16 POINTS                
+ FOR icr   3 TYPE surface    3   0   0 THERE ARE      156 POINTS                
+ FOR icr   4 TYPE surface    4   0   0 THERE ARE      156 POINTS                
+ FOR icr   5 TYPE surface    5   0   0 THERE ARE      156 POINTS                
+ FOR icr   6 TYPE surface    6   0   0 THERE ARE      156 POINTS                
+ FOR icr   7 TYPE line       1   3   0 THERE ARE        4 POINTS                
+ FOR icr   8 TYPE line       2   3   0 THERE ARE        4 POINTS                
+ FOR icr   9 TYPE line       1   4   0 THERE ARE        4 POINTS                
+ FOR icr  10 TYPE line       2   4   0 THERE ARE        4 POINTS                

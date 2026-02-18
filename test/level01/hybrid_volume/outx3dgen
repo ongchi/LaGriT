@@ -1,0 +1,57 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:07          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+# Hybrid control volume tests                                                   
+# These tests verify the hybrid and nohybrid options of dump / fehm and dump /  
+# stor. They also test cmo / addatt / / hybrid_volume, which is closely related.
+# Note: gmv read/write commented out to avoid binary files in testing           
+# Input files:                                                                  
+#   input03.inp                                                                 
+#   input04.inp                                                                 
+#   input08.gmv                                                                 
+#   input09.inp                                                                 
+# Output files:                                                                 
+#   out_01.{gmv,stor}                                                           
+#   out_02.gmv                                                                  
+#   out_03.gmv                                                                  
+#   out_04.{gmv,stor}                                                           
+#   out_05.stor                                                                 
+#   out_06.stor                                                                 
+#   out_07.stor                                                                 
+#   out_08.stor                                                                 
+#   out_09.gmv                                                                  
+#   out_09_{hybrid,nohybrid}.stor                                               
+#   out_11.{gmv,stor}                                                           
+#   out_11_h.stor                                                               
+# Verify that the sum of the Voronoi volumes, the sum of the hybrid volumes, and
+# the sum of the element volumes are all the same.                              
+cmo/create/mo1///tet                                                            

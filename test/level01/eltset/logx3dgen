@@ -1,0 +1,28 @@
+cmo/create/mo///hex                                                             
+createpts/brick/xyz/11,11,11/0,0,0/10,10,10/1,1,1                               
+pset/pset1/geom/rtp/1 0 0/0,0,0/5,360,180/                                      
+pset/pset2/geom/xyz/1 0 0/7,7,7/10,10,10/                                       
+eltset/eset1/inclusive/pset get pset1/                                          
+eltset//list                                                                    
+eltset/eset2/inclusive/pset get pset2/                                          
+cmo/setatt/mo/imt/1 0 0/1                                                       
+cmo/setatt/mo/imt/pset get pset1/2                                              
+cmo/setatt/mo/imt/pset get pset2/3                                              
+cmo/setatt/mo/itetclr/1 0 0/1                                                   
+cmo/setatt/mo/itetclr/eltset get eset1/2                                        
+cmo/setatt/mo/itetclr/eltset get eset2/3                                        
+dump/avs/output_mesh.inp/mo                                                     
+eltset//list                                                                    
+eltset/0/list                                                                   
+eltset/-def-/list                                                               
+eltset/eset1/write/output_eset01                                                
+eltset/eset2/write/output_eset02.cellset                                        
+eltset/eset1/write/output_eset03/ascii                                          
+eltset/eset1/write/output_eset04/binary                                         
+eltset/eset1/write/output_eset05/                                               
+eltset/eset1/write/output_eset06/-def-                                          
+eltset/eset1/write/output_eset07                                                
+eltset/-def-/write/output_eset08                                                
+eltset/-all-/write/output_eset09                                                
+eltset//write/output_eset10                                                     
+finish                                                                          

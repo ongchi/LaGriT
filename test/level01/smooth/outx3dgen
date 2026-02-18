@@ -1,0 +1,109 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:15          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+* Test smooth                                                                   
+* run both smooth and recon on a 3d mesh                                        
+cmo/create/3dmesh/                                                              
+cmo/addatt/-def-/bor/                                                           
+cmo/modatt/-def-/bor/interp/asinh/                                              
+cmo/modatt/-def-/bor/ioflag/gx/                                                 
+*cmo/status/                                                                    
+surface/device/reflect/box/0.0,-0.5,-0.2/4.0,2.0,0.2/                           
+cmo/addatt//ncon50/INT/scalar/scalar/constant/permanent/l/0                     
+finish                                                                          
+cmo/addatt//nconbnd/INT/scalar/scalar/constant/permanent/l/0                    
+finish                                                                          
+cmo/addatt//icontab/VINT/scalar/ncon50/constant/permanent/l/0.0                 
+finish                                                                          
+surface/channel/intrface/box/0.6,0.0,-0.2/3.4,0.3,0.2/                          
+surface/lvr/intrface/plane/0.5,-0.5,0.0/0.5,-0.5,-0.2/0.5,2.0 -0.2/             
+  The unit vector for lvr      is  1.0000000i   0.0000000j   0.0000000k         
+surface/rvr/intrface/plane/3.5,-0.5,0.0/3.5,-0.5,-0.2/3.5,2.0 -0.2/             
+  The unit vector for rvr      is  1.0000000i   0.0000000j   0.0000000k         
+surface/mhu/intrface/plane/0.0,0.0,0.0/4.0,0.0,0.0/4.0,0.0 -0.2/                
+  The unit vector for mhu      is  0.0000000i   1.0000000j   0.0000000k         
+surface/chu/intrface/plane/0.5,-.008,0.0/3.5,-.008,0.0/3.5,-.008 -0.2/          
+  The unit vector for chu      is  0.0000000i   1.0000000j   0.0000000k         
+mregion/PolySil/( le device and lt chu and gt lvr and lt rvr )/                 
+mregion/Silinch/( le device and gt mhu and gt channel )/                        
+mregion/Silichn/( le device and lt channel )/                                   
+region/PolySil/( le device and lt chu and ge lvr and le rvr )/                  
+region/Silicon/( le device and ge mhu and gt channel )/                         
+region/GOxide/le device and ge lvr and le rvr and lt mhu and ge chu/            
+region/SrcOxPS/( le device and lt mhu and lt lvr )/                             
+region/DrnOxPS/( le device and lt mhu and gt rvr )/                             
+region/Channel/( le device and le channel )/                                    
+mregion/SiO2PS/le device and ( ( lt mhu and gt chu ) or ( le chu and lt lvr ) or
+ ( le chu and gt rvr ) )/                                                       
+createpts/xyz/6,1,4/0.0,2.1,-0.2/0.5,2.1,0.2/1,0,1/                             
+  RZ GENERATED POINTS                    1 TO                   24              
+createpts/xyz/6,1,4/3.5,2.1,-0.2/4.0,2.1,0.2/1,0,1/                             
+  RZ GENERATED POINTS                   25 TO                   48              
+createpts/xyz/16,1,4/0.5,2.1,-0.2/3.5,2.1,0.2/1,0,1/                            
+  RZ GENERATED POINTS                   49 TO                  112              
+createpts/xyz/1,1,4/.6,2.1,-0.2/.6,2.1,0.2/0,0,1/                               
+  RZ GENERATED POINTS                  113 TO                  116              
+createpts/xyz/1,1,4/3.4,2.1,-0.2/3.4,2.1,0.2/0,0,1/                             
+  RZ GENERATED POINTS                  117 TO                  120              
+pset/rays/seq/1,0,0/                                                            
+ 
+ THE PSET  rays  HAS        120 POINTS                                          
+regnpts/PolySil/4/pset,get,rays/xyz/0.0,-0.6,-0.2/4.0,-0.6,-0.2/4.0,-0.6,0.0/0,0
+/                                                                               
+  REGNPTS GENERATED POINTS       121 TO       520 FOR REGION PolySil            
+regnpts/DrnOxPS/4/pset,get,rays/xyz/0.0,-0.6,-0.2/4.0,-0.6,-0.2/4.0,-0.6,0.0/0,0
+/                                                                               
+  REGNPTS GENERATED POINTS       521 TO       620 FOR REGION DrnOxPS            
+regnpts/SrcOxPS/4/pset,get,rays/xyz/0.0,-0.6,-0.2/4.0,-0.6,-0.2/4.0,-0.6,0.0/0,0
+/                                                                               
+  REGNPTS GENERATED POINTS       621 TO       720 FOR REGION SrcOxPS            
+regnpts/GOxide/2/pset,get,rays/xyz/0.0,-0.6,-0.2/4.0,-0.6,-0.2/4.0,-0.6,0.0/0,0/
+  REGNPTS GENERATED POINTS       721 TO       960 FOR REGION GOxide             
+regnpts/Silicon/9/pset,get,rays/xyz/0.0,-0.5,-0.2/4.0,-0.5,-0.2/4.0,-0.5,0.0/0,0
+/                                                                               
+  REGNPTS GENERATED POINTS       961 TO      2216 FOR REGION Silicon            
+regnpts/Channel/5/pset,get,rays/xyz/0.0,-0.5,-0.2/4.0,-0.5,-0.2/4.0,-0.5,0.0/1,1
+.4/                                                                             
+  REGNPTS GENERATED POINTS      2217 TO      2664 FOR REGION Channel            
+filter/1,0,0/                                                                   
+FILTER:Use internal epsilonl value =   0.106303492263E-11                       
+FILTER:Dudding duplicate points:         160                                    
+setpts                                                                          
+ FOR icr   1 TYPE surface    1   0   0 THERE ARE     1364 POINTS                
+ FOR imt=   1 NAME= PolySil  THERE ARE             320 POINTS                   
+ FOR imt=   2 NAME= Silinch  THERE ARE            1120 POINTS                   
+ FOR imt=   3 NAME= Silichn  THERE ARE             140 POINTS                   
+ FOR imt=   4 NAME= SiO2PS   THERE ARE             344 POINTS                   
+ FOR imt=   5 NAME= intrface THERE ARE             476 POINTS                   
+cmo/setatt//itp1/pset,get,rays/21                                               
+Warning: nelements = 0                                                          
+         8 values reset for attribute itp1                                      

@@ -124,8 +124,22 @@ C
 C     -------------------------------------------------------------
 C     OPERATOR, CHECK THE HIERARCHY
 C
-   30 if(levl(j).le.last) if(levl(j)-1) 40,50,50
-      if(j.eq.2) if(last) 40,60,40
+   30 if(levl(j).le.last) then
+         if(levl(j).lt.1) then
+            go to 40
+         else
+            go to 50
+         endif
+      endif
+      if(j.eq.2) then
+         if(last.lt.0) then
+            go to 40
+         else if(last.eq.0) then
+            go to 60
+         else
+            go to 40
+         endif
+      endif
 C
 C     -------------------------------------------------------------
 C     PUT OPERATOR ONTO HOLD STACK

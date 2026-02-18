@@ -1,0 +1,1480 @@
+ 
+ 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+*               *                                             *                 
+*               *    Program:  LaGriT V3.3.4   Linux          *                 
+*               *    Compiler Name: GNU                       *                 
+*               *    Compiler Version: 13.3.0                 *                 
+*               *    Date Compile: 2025/11/16                 *                 
+*               *    Run Time: 2025/Nov 16  13:45:16          *                 
+*               *    Manual:   https://lagrit.lanl.gov        *                 
+*               *                                             *                 
+*               * * * * * * * * * * * * * * * * * * * * * * * *                 
+ 
+                               -----oOo-----                                    
+             LaGriT V3 LA-CC-15-069  https://github.com/lanl/LaGriT             
+  Copyright 2016. Triad National Security, LLC.  All rights reserved. This      
+  program was produced under U.S. Government contract 89233218CNA000001         
+  for Los Alamos National Laboratory (LANL), which is operated by Triad         
+  National Security, LLC for the U.S. Department of Energy/National Nuclear     
+  Security Administration.  All rights in the program are reserved by Triad     
+  National Security, LLC, and the U.S. Department of Energy/National Nuclear    
+  Security Administration. The Government is granted for itself and others      
+  acting on its behalf a nonexclusive, paid-up, irrevocable worldwide license   
+  in this material to reproduce, prepare derivative works, distribute copies    
+  to the public, perform publicly and display publicly, and to permit others to 
+  do so. This software is open source and available under the BSD-3 License.    
+                               -----oOo-----                                    
+ 
+ 
+Output log file: outx3dgen                                                      
+Command log file: logx3dgen                                                     
+ 
+# LaGriT Test 2D smooth and massage                                             
+# read the line polygon and triangulate                                         
+# mesh object must be planar                                                    
+# uncomment dump/avs for further evaluations                                    
+read avs input_polygon.inp moin                                                 
+geniee                                                                          
+finish                                                                          
+cmo/status/brief                                                                
+ 
+The current-mesh-object(CMO) is: moin                                           
+ 
+  1 Mesh Object name: moin                                                      
+    number of nodes =             7        number of elements =            7    
+    dimensions geometry =         3        element type =                lin    
+    dimensions topology =         1        2 nodes      2 faces      1 edges    
+    boundary flag =        16000000        status =                   active    
+ 
+ 
+finish                                                                          
+cmo/printatt/moin/-xyz-/minmax                                                  
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ xic                0.000000000E+00  2.000000000E+04 2.000000000E+04         7  
+ yic                0.000000000E+00  1.000000000E+04 1.000000000E+04         7  
+ zic                0.000000000E+00  0.000000000E+00 0.000000000E+00         7  
+ 
+cmo create cmotri///triplane                                                    
+copypts cmotri moin                                                             
+copypts added nodes          1 to          7                                    
+cmo/delete/moin                                                                 
+     Released Mesh Object: moin                                                 
+cmo select cmotri                                                               
+# RUN 00 triangulate                                                            
+# triangulate inside the polygon                                                
+triangulate/clockwise                                                           
+TRIANGULATE: Number of triangle cells =    5                                    
+filter/1,0,0                                                                    
+FILTER:Use internal epsilonl value =   0.496506830649E-08                       
+FILTER:Dudding duplicate points:           0                                    
+finish                                                                          
+rmpoint/compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is            7                                        
+RMPOINT: new element count is          5                                        
+finish                                                                          
+resetpts/itp                                                                    
+geniee                                                                          
+finish                                                                          
+finish                                                                          
+cmo setatt cmotri imt 1                                                         
+         7 values reset for attribute imt1                                      
+ 
+cmo setatt cmotri itetclr 1                                                     
+         5 values reset for attribute itetclr                                   
+ 
+resetpts/itp                                                                    
+geniee                                                                          
+finish                                                                          
+# CHECK 00 coarse triangulation                                                 
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          1                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :          2                          
+elements with aspect ratio b/w .5  and 1. :          2                          
+min aspect ratio =  0.3703E-01  max aspect ratio =  0.8284E+00                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.1000E+07 and  0.2187E+07:         0                      
+element volumes b/w  0.2187E+07 and  0.4782E+07:         0                      
+element volumes b/w  0.4782E+07 and  0.1046E+08:         0                      
+element volumes b/w  0.1046E+08 and  0.2287E+08:         2                      
+element volumes b/w  0.2287E+08 and  0.5000E+08:         3                      
+min volume =   1.0000000E+06  max volume =   5.0000000E+07                      
+-----------------------------------------------------------                     
+         5 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :          0                            
+element norm edge length b/w .2  and .5 :          2                            
+element norm edge length b/w .5  and 1. :          3                            
+min max edge length =  0.1000E+03  max max edge length =  0.2062E+05            
+-----------------------------------------------------------                     
+         5 total elements evaluated.                                            
+ 
+# dump avs out_tri00.inp cmotri                                                 
+# RUN 01 refine edge 1000                                                       
+# break into triangles of nicer sizes                                           
+define EDGELEN 1000.                                                            
+refine rivara///edge/1,0,0/EDGELEN///inclusive                                  
+Face iteration, number of faces:          1         1                           
+Face iteration, number of faces:          1         1                           
+Face iteration, number of faces:          1         2                           
+Face iteration, number of faces:          1         4                           
+Face iteration, number of faces:          1         4                           
+Face iteration, number of faces:          1         8                           
+Face iteration, number of faces:          1        10                           
+Face iteration, number of faces:          1        13                           
+Face iteration, number of faces:          1        17                           
+Face iteration, number of faces:          1        25                           
+Face iteration, number of faces:          1        33                           
+Face iteration, number of faces:          1        37                           
+Face iteration, number of faces:          1        45                           
+Face iteration, number of faces:          1        56                           
+Face iteration, number of faces:          1        57                           
+Face iteration, number of faces:          1        57                           
+Face iteration, number of faces:          1        41                           
+Face iteration, number of faces:          1        25                           
+Face iteration, number of faces:          1        12                           
+Face iteration, number of faces:          1         1                           
+recon/0/0.49650683E-08/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         26               
+Recon2d: iteration number=          2 number of flips=          5               
+RECON: done.                                                                    
+finish                                                                          
+# CHECK 01 refine edge 1000                                                     
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :         63                          
+elements with aspect ratio b/w .5  and 1. :        767                          
+min aspect ratio =  0.2983E+00  max aspect ratio =  0.9889E+00                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.2441E+05 and  0.4251E+05:        10                      
+element volumes b/w  0.4251E+05 and  0.7401E+05:        60                      
+element volumes b/w  0.7401E+05 and  0.1289E+06:       316                      
+element volumes b/w  0.1289E+06 and  0.2244E+06:       419                      
+element volumes b/w  0.2244E+06 and  0.3906E+06:        25                      
+min volume =   2.4414062E+04  max volume =   3.9062500E+05                      
+-----------------------------------------------------------                     
+       830 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+CMO_ADDATT warning: attribute already exist: cmotri  edgemax                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :          0                            
+element norm edge length b/w .2  and .5 :          8                            
+element norm edge length b/w .5  and 1. :        822                            
+min max edge length =  0.1000E+03  max max edge length =  0.9882E+03            
+-----------------------------------------------------------                     
+       830 total elements evaluated.                                            
+ 
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            3.493856215E+02  9.882117688E+02 6.388261473E+02       830  
+ 
+# dump avs out_tri01a.inp cmotri                                                
+# RUN 01b smooth                                                                
+# smooth to make nice distribution                                              
+cmo select cmotri                                                               
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =        456                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.2441406E+05                                      
+ Max. area BEFORE smoothing= 0.3906250E+06                                      
+Iteration=   1; root mean square error= 0.7291906E+02                           
+Iteration=   2; root mean square error= 0.3858470E+02                           
+Iteration=   3; root mean square error= 0.2455966E+02                           
+Iteration=   4; root mean square error= 0.1855634E+02                           
+Iteration=   5; root mean square error= 0.1573504E+02                           
+Iteration=   6; root mean square error= 0.1393800E+02                           
+Iteration=   7; root mean square error= 0.1259125E+02                           
+Iteration=   8; root mean square error= 0.1150871E+02                           
+Iteration=   9; root mean square error= 0.1060184E+02                           
+Iteration=  10; root mean square error= 0.9821565E+01                           
+Iteration=  11; root mean square error= 0.9137880E+01                           
+Iteration=  12; root mean square error= 0.8531034E+01                           
+Iteration=  13; root mean square error= 0.7987213E+01                           
+Iteration=  14; root mean square error= 0.7496247E+01                           
+Iteration=  15; root mean square error= 0.7050341E+01                           
+Iteration=  16; root mean square error= 0.6643327E+01                           
+Iteration=  17; root mean square error= 0.6270201E+01                           
+Iteration=  18; root mean square error= 0.5926831E+01                           
+Iteration=  19; root mean square error= 0.5609756E+01                           
+Iteration=  20; root mean square error= 0.5316050E+01                           
+Iteration=  21; root mean square error= 0.5043214E+01                           
+Iteration=  22; root mean square error= 0.4789105E+01                           
+Iteration=  23; root mean square error= 0.4551870E+01                           
+Iteration=  24; root mean square error= 0.4329901E+01                           
+Iteration=  25; root mean square error= 0.4121798E+01                           
+ Min. area AFTER smoothing= 0.7976069E+05                                       
+ Max. area AFTER smoothing= 0.3064608E+06                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         76               
+Recon2d: iteration number=          2 number of flips=          1               
+RECON: done.                                                                    
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =        456                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.3788488E+05                                      
+ Max. area BEFORE smoothing= 0.3064608E+06                                      
+Iteration=   1; root mean square error= 0.4917833E+02                           
+Iteration=   2; root mean square error= 0.2266765E+02                           
+Iteration=   3; root mean square error= 0.1352541E+02                           
+Iteration=   4; root mean square error= 0.1074331E+02                           
+Iteration=   5; root mean square error= 0.9356515E+01                           
+Iteration=   6; root mean square error= 0.8449905E+01                           
+Iteration=   7; root mean square error= 0.7773775E+01                           
+Iteration=   8; root mean square error= 0.7232604E+01                           
+Iteration=   9; root mean square error= 0.6780397E+01                           
+Iteration=  10; root mean square error= 0.6391320E+01                           
+Iteration=  11; root mean square error= 0.6049521E+01                           
+Iteration=  12; root mean square error= 0.5744589E+01                           
+Iteration=  13; root mean square error= 0.5469300E+01                           
+Iteration=  14; root mean square error= 0.5218405E+01                           
+Iteration=  15; root mean square error= 0.4987960E+01                           
+Iteration=  16; root mean square error= 0.4774916E+01                           
+Iteration=  17; root mean square error= 0.4576871E+01                           
+Iteration=  18; root mean square error= 0.4391899E+01                           
+Iteration=  19; root mean square error= 0.4218436E+01                           
+Iteration=  20; root mean square error= 0.4055194E+01                           
+Iteration=  21; root mean square error= 0.3901104E+01                           
+Iteration=  22; root mean square error= 0.3755266E+01                           
+Iteration=  23; root mean square error= 0.3616919E+01                           
+Iteration=  24; root mean square error= 0.3485414E+01                           
+Iteration=  25; root mean square error= 0.3360188E+01                           
+ Min. area AFTER smoothing= 0.8080579E+05                                       
+ Max. area AFTER smoothing= 0.2713731E+06                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         21               
+Recon2d: iteration number=          2 number of flips=          1               
+RECON: done.                                                                    
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =        456                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.6400261E+05                                      
+ Max. area BEFORE smoothing= 0.2713731E+06                                      
+Iteration=   1; root mean square error= 0.3810481E+02                           
+Iteration=   2; root mean square error= 0.1828501E+02                           
+Iteration=   3; root mean square error= 0.9918671E+01                           
+Iteration=   4; root mean square error= 0.7020860E+01                           
+Iteration=   5; root mean square error= 0.5736994E+01                           
+Iteration=   6; root mean square error= 0.5006043E+01                           
+Iteration=   7; root mean square error= 0.4527843E+01                           
+Iteration=   8; root mean square error= 0.4181391E+01                           
+Iteration=   9; root mean square error= 0.3910972E+01                           
+Iteration=  10; root mean square error= 0.3688189E+01                           
+Iteration=  11; root mean square error= 0.3497411E+01                           
+Iteration=  12; root mean square error= 0.3329472E+01                           
+Iteration=  13; root mean square error= 0.3178690E+01                           
+Iteration=  14; root mean square error= 0.3041357E+01                           
+Iteration=  15; root mean square error= 0.2914941E+01                           
+Iteration=  16; root mean square error= 0.2797632E+01                           
+Iteration=  17; root mean square error= 0.2688096E+01                           
+Iteration=  18; root mean square error= 0.2585310E+01                           
+Iteration=  19; root mean square error= 0.2488473E+01                           
+Iteration=  20; root mean square error= 0.2396940E+01                           
+Iteration=  21; root mean square error= 0.2310182E+01                           
+Iteration=  22; root mean square error= 0.2227758E+01                           
+Iteration=  23; root mean square error= 0.2149294E+01                           
+Iteration=  24; root mean square error= 0.2074471E+01                           
+Iteration=  25; root mean square error= 0.2003011E+01                           
+ Min. area AFTER smoothing= 0.8154706E+05                                       
+ Max. area AFTER smoothing= 0.2561202E+06                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=          4               
+RECON: done.                                                                    
+filter/1,0,0                                                                    
+FILTER:Use internal epsilonl value =   0.496506830649E-08                       
+FILTER:Dudding duplicate points:           0                                    
+rmpoint compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is          456                                        
+RMPOINT: new element count is        830                                        
+resetpts/itp                                                                    
+geniee                                                                          
+finish                                                                          
+# dump avs out_tri01b.inp cmotri                                                
+# CHECK 01b smooth esug                                                         
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :          0                          
+elements with aspect ratio b/w .5  and 1. :        830                          
+min aspect ratio =  0.6156E+00  max aspect ratio =  0.9997E+00                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.8155E+05 and  0.1025E+06:        88                      
+element volumes b/w  0.1025E+06 and  0.1289E+06:       143                      
+element volumes b/w  0.1289E+06 and  0.1620E+06:       276                      
+element volumes b/w  0.1620E+06 and  0.2037E+06:       275                      
+element volumes b/w  0.2037E+06 and  0.2561E+06:        48                      
+min volume =   8.1547061E+04  max volume =   2.5612025E+05                      
+-----------------------------------------------------------                     
+       830 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+CMO_ADDATT warning: attribute already exist: cmotri  edgemax                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :          0                            
+element norm edge length b/w .2  and .5 :          0                            
+element norm edge length b/w .5  and 1. :        830                            
+min max edge length =  0.1000E+03  max max edge length =  0.8839E+03            
+-----------------------------------------------------------                     
+       830 total elements evaluated.                                            
+ 
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            4.645695742E+02  8.838834765E+02 4.193139022E+02       830  
+ 
+# RUN 02 massage 200                                                            
+define MAXEDGE 300.                                                             
+define MINEDGE 100.                                                             
+define DAMAGE .01                                                               
+massage/MAXEDGE MINEDGE DAMAGE/1,0,0/                                           
+nodes in point set  =        456                                                
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+RECON: done.                                                                    
+finish                                                                          
+nodes in point set  =        456                                                
+SGD:      3 total relaxations on point set of    456 indept. nodes.             
+rmpoint/compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is          456                                        
+RMPOINT: new element count is        830                                        
+finish                                                                          
+nodes in point set  =        456                                                
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=          1               
+RECON: done.                                                                    
+finish                                                                          
+nodes in point set  =        456                                                
+SGD:      1 total relaxations on point set of    456 indept. nodes.             
+rmpoint/compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is          456                                        
+RMPOINT: new element count is        830                                        
+finish                                                                          
+nodes in point set  =        456                                                
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+RECON: done.                                                                    
+finish                                                                          
+nodes in point set  =        456                                                
+SGD:      0 total relaxations on point set of    456 indept. nodes.             
+nodes in point set  =        456                                                
+Face iteration, number of faces:          1       152                           
+Face iteration, number of faces:          1       179                           
+Face iteration, number of faces:          1       236                           
+Face iteration, number of faces:          1       320                           
+Face iteration, number of faces:          1       401                           
+Face iteration, number of faces:          1       529                           
+Face iteration, number of faces:          1       620                           
+Face iteration, number of faces:          1       639                           
+Face iteration, number of faces:          1       534                           
+Face iteration, number of faces:          1       325                           
+Face iteration, number of faces:          1       135                           
+Face iteration, number of faces:          1        46                           
+Face iteration, number of faces:          1        10                           
+Face iteration, number of faces:          1         4                           
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=        829               
+Recon2d: iteration number=          2 number of flips=          2               
+RECON: done.                                                                    
+finish                                                                          
+rmpoint compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         4586                                        
+RMPOINT: new element count is       8850                                        
+# CHECK 02 massage 200                                                          
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :         10                          
+elements with aspect ratio b/w .5  and 1. :       8840                          
+min aspect ratio =  0.4661E+00  max aspect ratio =  0.9997E+00                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.3379E+04 and  0.5458E+04:         2                      
+element volumes b/w  0.5458E+04 and  0.8817E+04:       668                      
+element volumes b/w  0.8817E+04 and  0.1424E+05:      4780                      
+element volumes b/w  0.1424E+05 and  0.2301E+05:      3009                      
+element volumes b/w  0.2301E+05 and  0.3717E+05:       391                      
+min volume =   3.3786184E+03  max volume =   3.7174279E+04                      
+-----------------------------------------------------------                     
+      8850 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+CMO_ADDATT warning: attribute already exist: cmotri  edgemax                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :          0                            
+element norm edge length b/w .2  and .5 :          0                            
+element norm edge length b/w .5  and 1. :       8850                            
+min max edge length =  0.1000E+03  max max edge length =  0.2998E+03            
+-----------------------------------------------------------                     
+      8850 total elements evaluated.                                            
+ 
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            1.510173593E+02  2.998451968E+02 1.488278376E+02      8850  
+ 
+# dump avs out_tri02a.inp cmotri                                                
+# RUN 02b smooth 200                                                            
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =       4586                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.3378618E+04                                      
+ Max. area BEFORE smoothing= 0.3717428E+05                                      
+Iteration=   1; root mean square error= 0.2310079E+02                           
+Iteration=   2; root mean square error= 0.9798797E+01                           
+Iteration=   3; root mean square error= 0.5874363E+01                           
+Iteration=   4; root mean square error= 0.4518509E+01                           
+Iteration=   5; root mean square error= 0.3758447E+01                           
+Iteration=   6; root mean square error= 0.3242594E+01                           
+Iteration=   7; root mean square error= 0.2860955E+01                           
+Iteration=   8; root mean square error= 0.2563985E+01                           
+Iteration=   9; root mean square error= 0.2324860E+01                           
+Iteration=  10; root mean square error= 0.2127472E+01                           
+Iteration=  11; root mean square error= 0.1961426E+01                           
+Iteration=  12; root mean square error= 0.1819639E+01                           
+Iteration=  13; root mean square error= 0.1697083E+01                           
+Iteration=  14; root mean square error= 0.1590067E+01                           
+Iteration=  15; root mean square error= 0.1495809E+01                           
+Iteration=  16; root mean square error= 0.1412170E+01                           
+Iteration=  17; root mean square error= 0.1337467E+01                           
+Iteration=  18; root mean square error= 0.1270361E+01                           
+Iteration=  19; root mean square error= 0.1209767E+01                           
+Iteration=  20; root mean square error= 0.1154801E+01                           
+Iteration=  21; root mean square error= 0.1104729E+01                           
+Iteration=  22; root mean square error= 0.1058939E+01                           
+Iteration=  23; root mean square error= 0.1016917E+01                           
+Iteration=  24; root mean square error= 0.9782271E+00                           
+Iteration=  25; root mean square error= 0.9424967E+00                           
+ Min. area AFTER smoothing= 0.6494406E+04                                       
+ Max. area AFTER smoothing= 0.2774563E+05                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=        198               
+RECON: done.                                                                    
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =       4586                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.6494406E+04                                      
+ Max. area BEFORE smoothing= 0.2822753E+05                                      
+Iteration=   1; root mean square error= 0.1144621E+02                           
+Iteration=   2; root mean square error= 0.4968664E+01                           
+Iteration=   3; root mean square error= 0.2370484E+01                           
+Iteration=   4; root mean square error= 0.1669331E+01                           
+Iteration=   5; root mean square error= 0.1359991E+01                           
+Iteration=   6; root mean square error= 0.1181363E+01                           
+Iteration=   7; root mean square error= 0.1062119E+01                           
+Iteration=   8; root mean square error= 0.9751434E+00                           
+Iteration=   9; root mean square error= 0.9078575E+00                           
+Iteration=  10; root mean square error= 0.8535664E+00                           
+Iteration=  11; root mean square error= 0.8083588E+00                           
+Iteration=  12; root mean square error= 0.7697893E+00                           
+Iteration=  13; root mean square error= 0.7362482E+00                           
+Iteration=  14; root mean square error= 0.7066313E+00                           
+Iteration=  15; root mean square error= 0.6801547E+00                           
+Iteration=  16; root mean square error= 0.6562455E+00                           
+Iteration=  17; root mean square error= 0.6344742E+00                           
+Iteration=  18; root mean square error= 0.6145111E+00                           
+Iteration=  19; root mean square error= 0.5960986E+00                           
+Iteration=  20; root mean square error= 0.5790310E+00                           
+Iteration=  21; root mean square error= 0.5631420E+00                           
+Iteration=  22; root mean square error= 0.5482948E+00                           
+Iteration=  23; root mean square error= 0.5343754E+00                           
+Iteration=  24; root mean square error= 0.5212878E+00                           
+Iteration=  25; root mean square error= 0.5089502E+00                           
+ Min. area AFTER smoothing= 0.6448557E+04                                       
+ Max. area AFTER smoothing= 0.2554101E+05                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         65               
+RECON: done.                                                                    
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =       4586                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.6448557E+04                                      
+ Max. area BEFORE smoothing= 0.2554101E+05                                      
+Iteration=   1; root mean square error= 0.6703404E+01                           
+Iteration=   2; root mean square error= 0.3006522E+01                           
+Iteration=   3; root mean square error= 0.1422446E+01                           
+Iteration=   4; root mean square error= 0.9819699E+00                           
+Iteration=   5; root mean square error= 0.7898179E+00                           
+Iteration=   6; root mean square error= 0.6816311E+00                           
+Iteration=   7; root mean square error= 0.6126752E+00                           
+Iteration=   8; root mean square error= 0.5649105E+00                           
+Iteration=   9; root mean square error= 0.5296513E+00                           
+Iteration=  10; root mean square error= 0.5022723E+00                           
+Iteration=  11; root mean square error= 0.4801334E+00                           
+Iteration=  12; root mean square error= 0.4616432E+00                           
+Iteration=  13; root mean square error= 0.4457976E+00                           
+Iteration=  14; root mean square error= 0.4319375E+00                           
+Iteration=  15; root mean square error= 0.4196145E+00                           
+Iteration=  16; root mean square error= 0.4085130E+00                           
+Iteration=  17; root mean square error= 0.3984048E+00                           
+Iteration=  18; root mean square error= 0.3891198E+00                           
+Iteration=  19; root mean square error= 0.3805285E+00                           
+Iteration=  20; root mean square error= 0.3725300E+00                           
+Iteration=  21; root mean square error= 0.3650444E+00                           
+Iteration=  22; root mean square error= 0.3580070E+00                           
+Iteration=  23; root mean square error= 0.3513650E+00                           
+Iteration=  24; root mean square error= 0.3450745E+00                           
+Iteration=  25; root mean square error= 0.3390987E+00                           
+ Min. area AFTER smoothing= 0.6432345E+04                                       
+ Max. area AFTER smoothing= 0.2542701E+05                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         39               
+RECON: done.                                                                    
+# CHECK 02b smooth after massage                                                
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :          2                          
+elements with aspect ratio b/w .5  and 1. :       8848                          
+min aspect ratio =  0.4656E+00  max aspect ratio =  0.1000E+01                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.6432E+04 and  0.8467E+04:        46                      
+element volumes b/w  0.8467E+04 and  0.1115E+05:      1461                      
+element volumes b/w  0.1115E+05 and  0.1467E+05:      3975                      
+element volumes b/w  0.1467E+05 and  0.1932E+05:      2757                      
+element volumes b/w  0.1932E+05 and  0.2543E+05:       611                      
+min volume =   6.4323445E+03  max volume =   2.5427014E+04                      
+-----------------------------------------------------------                     
+      8850 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+CMO_ADDATT warning: attribute already exist: cmotri  edgemax                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :          0                            
+element norm edge length b/w .2  and .5 :          5                            
+element norm edge length b/w .5  and 1. :       8845                            
+min max edge length =  0.1000E+03  max max edge length =  0.2951E+03            
+-----------------------------------------------------------                     
+      8850 total elements evaluated.                                            
+ 
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            1.378697457E+02  2.950999193E+02 1.572301736E+02      8850  
+ 
+# dump avs out_tri02b.inp cmotri                                                
+rmpoint compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         4586                                        
+RMPOINT: new element count is       8850                                        
+resetpts itp                                                                    
+geniee                                                                          
+finish                                                                          
+pset/pedge/attribute itp/1,0,0/ge 10                                            
+ 
+ THE PSET  pedge  HAS        320 POINTS                                         
+cmo create cmotmp                                                               
+copypts/cmotmp/cmotri/0 0/pset,get,pedge                                        
+copypts added nodes          1 to        320                                    
+compute/distance_field/cmotri/cmotmp/dfield                                     
+cmo/addatt/cmotri/temp_tmp_var/VDOUBLE/scalar/nnodes/linear/temporary//-1.0     
+finish                                                                          
+cmo/addatt/cmotri/xobj_tmp_var/VDOUBLE/scalar/nnodes/linear/temporary//-1.0     
+finish                                                                          
+cmo/addatt/cmotri/yobj_tmp_var/VDOUBLE/scalar/nnodes/linear/temporary//-1.0     
+finish                                                                          
+cmo/addatt/cmotri/zobj_tmp_var/VDOUBLE/scalar/nnodes/linear/temporary//-1.0     
+finish                                                                          
+cmo/addatt/cmotri/dfield/VDOUBLE/scalar/nnodes/linear/permanent//-1.0           
+finish                                                                          
+interpolate/voronoi/cmotri/xobj_tmp_var/1 0 0/cmotmp/xic/keepatt                
+nodes in indexed point set  =       4586                                        
+cmo/addatt/cmotri/pt_gtg/VINT/scalar/nnodes//permanent/agfx/0                   
+finish                                                                          
+ 
+INTRP METHOD:    voronoi   FUNCTION:     linear                                 
+      TIEBREAKER:     maxtie   FLAG:      plus1  0.200010000000E+05             
+ 
+pt_gtg attribute will be added and kept.                                        
+ 
+Build kdtree0 done - assign nearest node for each.                              
+ 
+ 
+     Sink point   Points Searched   Points Found  Percent Done                  
+ 
+           1148             1148           1148       25 %                      
+           2295             2295           2295       50 %                      
+           3442             3442           3442       75 %                      
+           4586             4586           4586       100%                      
+ 
+Total Source Nodes:                     320                                     
+Total Sink   Nodes:                    4586                                     
+ 
+ 
+interpolate/voronoi done.                                                       
+ 
+cmo select cmotri                                                               
+finish                                                                          
+cmo kdtree release                                                              
+finish                                                                          
+finish                                                                          
+interpolate/voronoi/cmotri/yobj_tmp_var/1 0 0/cmotmp/yic/keepatt                
+nodes in indexed point set  =       4586                                        
+ 
+INTRP METHOD:    voronoi   FUNCTION:     linear                                 
+      TIEBREAKER:     maxtie   FLAG:      plus1  0.100010000000E+05             
+ 
+SKIPPING POINT SEARCH... using lookup attribute pt_gtg                          
+           1148             1148           1148       25 %                      
+           2295             2295           2295       50 %                      
+           3442             3442           3442       75 %                      
+           4586             4586           4586       100%                      
+ 
+Total Source Nodes:                     320                                     
+Total Sink   Nodes:                    4586                                     
+ 
+ 
+interpolate/voronoi done.                                                       
+ 
+cmo select cmotri                                                               
+finish                                                                          
+cmo kdtree release                                                              
+finish                                                                          
+finish                                                                          
+interpolate/voronoi/cmotri/zobj_tmp_var/1 0 0/cmotmp/zic                        
+nodes in indexed point set  =       4586                                        
+ 
+INTRP METHOD:    voronoi   FUNCTION:     linear                                 
+      TIEBREAKER:     maxtie   FLAG:      plus1  0.100000000000E+01             
+ 
+SKIPPING POINT SEARCH... using lookup attribute pt_gtg                          
+           1148             1148           1148       25 %                      
+           2295             2295           2295       50 %                      
+           3442             3442           3442       75 %                      
+           4586             4586           4586       100%                      
+ 
+Total Source Nodes:                     320                                     
+Total Sink   Nodes:                    4586                                     
+ 
+ 
+interpolate/voronoi done.                                                       
+ 
+cmo DELATT cmotri/pt_gtg                                                        
+finish                                                                          
+cmo select cmotri                                                               
+finish                                                                          
+cmo kdtree release                                                              
+finish                                                                          
+finish                                                                          
+math/sub/cmotri/temp_tmp_var/1,0,0/cmotri/xic/cmotri/xobj_tmp_var               
+finish                                                                          
+math/power/cmotri/dfield/1,0,0/cmotri/temp_tmp_var/2.0                          
+finish                                                                          
+math/sub/cmotri/temp_tmp_var/1,0,0/cmotri/yic/cmotri/yobj_tmp_var               
+finish                                                                          
+math/power/cmotri/temp_tmp_var/1,0,0/cmotri/temp_tmp_var/2.0                    
+finish                                                                          
+math/add/cmotri/dfield/1 0 0/cmotri/dfield/cmotri/temp_tmp_var                  
+finish                                                                          
+math/sub/cmotri/temp_tmp_var/1,0,0/cmotri/zic/cmotri/zobj_tmp_var               
+finish                                                                          
+math/power/cmotri/temp_tmp_var/1,0,0/cmotri/temp_tmp_var/2.0                    
+finish                                                                          
+math/add/cmotri/dfield/1 0 0/cmotri/dfield/cmotri/temp_tmp_var                  
+finish                                                                          
+math/power/cmotri/dfield/1,0,0/cmotri/dfield/0.5                                
+finish                                                                          
+cmo/delatt/cmotri/temp_tmp_var                                                  
+finish                                                                          
+cmo/delatt/cmotri/xobj_tmp_var                                                  
+finish                                                                          
+cmo/delatt/cmotri/yobj_tmp_var                                                  
+finish                                                                          
+cmo/delatt/cmotri/zobj_tmp_var                                                  
+finish                                                                          
+COMPUTE distance_field: Done.                                                   
+cmo/delete/cmotmp                                                               
+     Released Mesh Object: cmotmp                                               
+cmo select cmotri                                                               
+# RUN 03 massage de-refine 600                                                  
+# select nodes inside mesh to massage                                           
+define MAXEDGE 1200.                                                            
+define MINEDGE 600.                                                             
+define DAMAGE .01                                                               
+pset/pmass/attribute dfield/1,0,0/gt 800.                                       
+ 
+ THE PSET  pmass  HAS       2988 POINTS                                         
+massage/MAXEDGE MINEDGE DAMAGE/pset,get,pmass/nosmooth                          
+nodes in point set  =       2988                                                
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and        1504 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged            752 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and        1126 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged            563 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and         886 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged            443 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and         698 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged            349 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and         486 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged            243 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and         362 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged            181 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and         232 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged            116 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and         186 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged             93 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and         142 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged             71 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and          98 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged             49 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and          68 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged             34 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and          38 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged             19 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and          14 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged              7 nodes.                                                    
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and           8 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged              4 nodes.                                                    
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         91               
+Recon2d: iteration number=          2 number of flips=         36               
+Recon2d: iteration number=          3 number of flips=         12               
+Recon2d: iteration number=          4 number of flips=          5               
+Recon2d: iteration number=          5 number of flips=          1               
+RECON: done.                                                                    
+finish                                                                          
+rmpoint/compress                                                                
+      2924 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1662                                        
+RMPOINT: new element count is       3002                                        
+finish                                                                          
+nodes in point set  =         64                                                
+rmpoint/element                                                                 
+ Dudded          0 points plus parents, and          12 elements removed.       
+finish                                                                          
+geniee                                                                          
+finish                                                                          
+Merged              6 nodes.                                                    
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         15               
+Recon2d: iteration number=          2 number of flips=          5               
+Recon2d: iteration number=          3 number of flips=          3               
+RECON: done.                                                                    
+finish                                                                          
+rmpoint/compress                                                                
+         6 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1656                                        
+RMPOINT: new element count is       2990                                        
+finish                                                                          
+nodes in point set  =         58                                                
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+RECON: done.                                                                    
+finish                                                                          
+rmpoint/compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1656                                        
+RMPOINT: new element count is       2990                                        
+finish                                                                          
+nodes in point set  =         58                                                
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+RECON: done.                                                                    
+finish                                                                          
+nodes in point set  =         58                                                
+Face iteration, number of faces:          1        24                           
+Face iteration, number of faces:          1        35                           
+Face iteration, number of faces:          1        34                           
+Face iteration, number of faces:          1        19                           
+Face iteration, number of faces:          1         8                           
+Face iteration, number of faces:          1         2                           
+Face iteration, number of faces:          1         3                           
+Face iteration, number of faces:          1         1                           
+recon/0/0.10000000E-01/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         81               
+Recon2d: iteration number=          2 number of flips=         33               
+Recon2d: iteration number=          3 number of flips=         12               
+RECON: done.                                                                    
+finish                                                                          
+rmpoint compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1782                                        
+RMPOINT: new element count is       3242                                        
+# CHECK 03 massage de-refine                                                    
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          1                          
+elements with aspect ratio b/w .1  and .2 :         26                          
+elements with aspect ratio b/w .2  and .5 :        193                          
+elements with aspect ratio b/w .5  and 1. :       3022                          
+min aspect ratio =  0.7434E-01  max aspect ratio =  0.1000E+01                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.4935E+04 and  0.1246E+05:       882                      
+element volumes b/w  0.1246E+05 and  0.3148E+05:      1827                      
+element volumes b/w  0.3148E+05 and  0.7949E+05:       148                      
+element volumes b/w  0.7949E+05 and  0.2008E+06:       200                      
+element volumes b/w  0.2008E+06 and  0.5070E+06:       185                      
+min volume =   4.9351230E+03  max volume =   5.0701999E+05                      
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+CMO_ADDATT warning: attribute already exist: cmotri  edgemax                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :       2138                            
+element norm edge length b/w .2  and .5 :        574                            
+element norm edge length b/w .5  and 1. :        530                            
+min max edge length =  0.1000E+03  max max edge length =  0.1181E+04            
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            1.496000443E+02  1.180528709E+03 1.030928665E+03      3242  
+ 
+# dump avs out_tri03a.inp cmotri                                                
+# RUN 03b smooth after de-refine                                                
+cmo select cmotri                                                               
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =       1782                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.4935123E+04                                      
+ Max. area BEFORE smoothing= 0.5070200E+06                                      
+Iteration=   1; root mean square error= 0.6370919E+02                           
+Iteration=   2; root mean square error= 0.5573016E+02                           
+Iteration=   3; root mean square error= 0.5367665E+02                           
+Iteration=   4; root mean square error= 0.4989705E+02                           
+Iteration=   5; root mean square error= 0.4490190E+02                           
+Iteration=   6; root mean square error= 0.3978697E+02                           
+Iteration=   7; root mean square error= 0.3520669E+02                           
+Iteration=   8; root mean square error= 0.3115302E+02                           
+Iteration=   9; root mean square error= 0.2756630E+02                           
+Iteration=  10; root mean square error= 0.2441660E+02                           
+Iteration=  11; root mean square error= 0.2165724E+02                           
+Iteration=  12; root mean square error= 0.1924035E+02                           
+Iteration=  13; root mean square error= 0.1712223E+02                           
+Iteration=  14; root mean square error= 0.1526508E+02                           
+Iteration=  15; root mean square error= 0.1363590E+02                           
+Iteration=  16; root mean square error= 0.1220589E+02                           
+Iteration=  17; root mean square error= 0.1094996E+02                           
+Iteration=  18; root mean square error= 0.9846239E+01                           
+Iteration=  19; root mean square error= 0.8875663E+01                           
+Iteration=  20; root mean square error= 0.8021608E+01                           
+Iteration=  21; root mean square error= 0.7269559E+01                           
+Iteration=  22; root mean square error= 0.6606836E+01                           
+Iteration=  23; root mean square error= 0.6022345E+01                           
+Iteration=  24; root mean square error= 0.5506373E+01                           
+Iteration=  25; root mean square error= 0.5050405E+01                           
+ Min. area AFTER smoothing= 0.1128233E+05                                       
+ Max. area AFTER smoothing= 0.1717015E+06                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=        697               
+Recon2d: iteration number=          2 number of flips=        149               
+Recon2d: iteration number=          3 number of flips=         39               
+Recon2d: iteration number=          4 number of flips=          5               
+RECON: done.                                                                    
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =       1782                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.6179561E+04                                      
+ Max. area BEFORE smoothing= 0.1717015E+06                                      
+Iteration=   1; root mean square error= 0.5066875E+02                           
+Iteration=   2; root mean square error= 0.2779621E+02                           
+Iteration=   3; root mean square error= 0.1957547E+02                           
+Iteration=   4; root mean square error= 0.1600448E+02                           
+Iteration=   5; root mean square error= 0.1384808E+02                           
+Iteration=   6; root mean square error= 0.1231962E+02                           
+Iteration=   7; root mean square error= 0.1112750E+02                           
+Iteration=   8; root mean square error= 0.1014089E+02                           
+Iteration=   9; root mean square error= 0.9295575E+01                           
+Iteration=  10; root mean square error= 0.8556091E+01                           
+Iteration=  11; root mean square error= 0.7900904E+01                           
+Iteration=  12; root mean square error= 0.7315672E+01                           
+Iteration=  13; root mean square error= 0.6790075E+01                           
+Iteration=  14; root mean square error= 0.6316216E+01                           
+Iteration=  15; root mean square error= 0.5887755E+01                           
+Iteration=  16; root mean square error= 0.5499440E+01                           
+Iteration=  17; root mean square error= 0.5146807E+01                           
+Iteration=  18; root mean square error= 0.4826007E+01                           
+Iteration=  19; root mean square error= 0.4533681E+01                           
+Iteration=  20; root mean square error= 0.4266875E+01                           
+Iteration=  21; root mean square error= 0.4022976E+01                           
+Iteration=  22; root mean square error= 0.3799665E+01                           
+Iteration=  23; root mean square error= 0.3594877E+01                           
+Iteration=  24; root mean square error= 0.3406769E+01                           
+Iteration=  25; root mean square error= 0.3233697E+01                           
+ Min. area AFTER smoothing= 0.1183025E+05                                       
+ Max. area AFTER smoothing= 0.1031386E+06                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=        237               
+Recon2d: iteration number=          2 number of flips=          8               
+Recon2d: iteration number=          3 number of flips=          3               
+RECON: done.                                                                    
+# CHECK 03b smooth after de-refine                                              
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :         18                          
+elements with aspect ratio b/w .5  and 1. :       3224                          
+min aspect ratio =  0.3379E+00  max aspect ratio =  0.1000E+01                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.5814E+04 and  0.1033E+05:         3                      
+element volumes b/w  0.1033E+05 and  0.1837E+05:       144                      
+element volumes b/w  0.1837E+05 and  0.3265E+05:      1186                      
+element volumes b/w  0.3265E+05 and  0.5803E+05:      1576                      
+element volumes b/w  0.5803E+05 and  0.1031E+06:       333                      
+min volume =   5.8139261E+03  max volume =   1.0313855E+05                      
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+CMO_ADDATT warning: attribute already exist: cmotri  edgemax                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :          0                            
+element norm edge length b/w .2  and .5 :        808                            
+element norm edge length b/w .5  and 1. :       2434                            
+min max edge length =  0.1000E+03  max max edge length =  0.6255E+03            
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+quality aspect y                                                                
+cmo/addatt//aratio/VDOUBLE/scalar/nelements                                     
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :         18                          
+elements with aspect ratio b/w .5  and 1. :       3224                          
+min aspect ratio =  0.3379E+00  max aspect ratio =  0.1000E+01                  
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+cmo/addatt/cmotri/ang_mind/ang_mind                                             
+ADDATT/ang_mind: creating new attribute: ang_mind                               
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            1.944580408E+02  6.254590081E+02 4.310009673E+02      3242  
+ 
+cmo printatt cmotri aratio minmax                                               
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ aratio             3.379424790E-01  9.999687547E-01 6.620262757E-01      3242  
+ 
+cmo printatt cmotri ang_mind minmax                                             
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ ang_mind           1.862048981E+01  5.966748280E+01 4.104699298E+01      3242  
+ 
+# dump avs out_tri03b.inp cmotri                                                
+# RUN 04 massage merge small edges                                              
+define MAXEDGE 1.e+20                                                           
+define MINEDGE .1                                                               
+define DAMAGE .1                                                                
+massage/MAXEDGE MINEDGE DAMAGE/1,0,0/                                           
+nodes in point set  =       1782                                                
+recon/0/0.10000000E+00/                                                         
+RECON2D reconnection loop2d:     1                                              
+RECON: done.                                                                    
+finish                                                                          
+nodes in point set  =       1782                                                
+SGD:    140 total relaxations on point set of   1782 indept. nodes.             
+rmpoint/compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1782                                        
+RMPOINT: new element count is       3242                                        
+finish                                                                          
+nodes in point set  =       1782                                                
+recon/0/0.10000000E+00/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         45               
+Recon2d: iteration number=          2 number of flips=          2               
+RECON: done.                                                                    
+finish                                                                          
+nodes in point set  =       1782                                                
+SGD:     23 total relaxations on point set of   1782 indept. nodes.             
+rmpoint/compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1782                                        
+RMPOINT: new element count is       3242                                        
+finish                                                                          
+nodes in point set  =       1782                                                
+recon/0/0.10000000E+00/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=          6               
+RECON: done.                                                                    
+finish                                                                          
+nodes in point set  =       1782                                                
+SGD:      7 total relaxations on point set of   1782 indept. nodes.             
+rmpoint/compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1782                                        
+RMPOINT: new element count is       3242                                        
+finish                                                                          
+nodes in point set  =       1782                                                
+recon/0/0.10000000E+00/                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=          1               
+RECON: done.                                                                    
+finish                                                                          
+nodes in point set  =       1782                                                
+SGD:      0 total relaxations on point set of   1782 indept. nodes.             
+nodes in point set  =       1782                                                
+rmpoint compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1782                                        
+RMPOINT: new element count is       3242                                        
+resetpts itp                                                                    
+geniee                                                                          
+finish                                                                          
+# CHECK 04 massage merge small edges                                            
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :          2                          
+elements with aspect ratio b/w .5  and 1. :       3240                          
+min aspect ratio =  0.4705E+00  max aspect ratio =  0.1000E+01                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.1183E+05 and  0.1824E+05:       130                      
+element volumes b/w  0.1824E+05 and  0.2813E+05:       758                      
+element volumes b/w  0.2813E+05 and  0.4338E+05:      1334                      
+element volumes b/w  0.4338E+05 and  0.6689E+05:       836                      
+element volumes b/w  0.6689E+05 and  0.1031E+06:       184                      
+min volume =   1.1830252E+04  max volume =   1.0313855E+05                      
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+CMO_ADDATT warning: attribute already exist: cmotri  edgemax                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :          0                            
+element norm edge length b/w .2  and .5 :        848                            
+element norm edge length b/w .5  and 1. :       2394                            
+min max edge length =  0.1000E+03  max max edge length =  0.6255E+03            
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+quality aspect y                                                                
+cmo/addatt//aratio/VDOUBLE/scalar/nelements                                     
+CMO_ADDATT warning: attribute already exist: cmotri  aratio                     
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :          2                          
+elements with aspect ratio b/w .5  and 1. :       3240                          
+min aspect ratio =  0.4705E+00  max aspect ratio =  0.1000E+01                  
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+cmo/addatt/cmotri/ang_mind/ang_mind                                             
+CMO_ADDATT warning: attribute already exist: cmotri  ang_mind                   
+ADDATT/ang_mind: writing to existing attribute: ang_mind                        
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            1.944580408E+02  6.254590081E+02 4.310009673E+02      3242  
+ 
+cmo printatt cmotri aratio minmax                                               
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ aratio             4.704533981E-01  9.999757018E-01 5.295223037E-01      3242  
+ 
+cmo printatt cmotri ang_mind minmax                                             
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ ang_mind           1.862048981E+01  5.968603191E+01 4.106554209E+01      3242  
+ 
+# dump avs out_tri04a.inp cmotri                                                
+# RUN 04b smooth after massage merge                                            
+cmo select cmotri                                                               
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =       1782                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.1183025E+05                                      
+ Max. area BEFORE smoothing= 0.1031386E+06                                      
+Iteration=   1; root mean square error= 0.2820071E+02                           
+Iteration=   2; root mean square error= 0.1263845E+02                           
+Iteration=   3; root mean square error= 0.7969993E+01                           
+Iteration=   4; root mean square error= 0.6311043E+01                           
+Iteration=   5; root mean square error= 0.5413593E+01                           
+Iteration=   6; root mean square error= 0.4804160E+01                           
+Iteration=   7; root mean square error= 0.4346978E+01                           
+Iteration=   8; root mean square error= 0.3984088E+01                           
+Iteration=   9; root mean square error= 0.3685013E+01                           
+Iteration=  10; root mean square error= 0.3431880E+01                           
+Iteration=  11; root mean square error= 0.3213388E+01                           
+Iteration=  12; root mean square error= 0.3021962E+01                           
+Iteration=  13; root mean square error= 0.2852286E+01                           
+Iteration=  14; root mean square error= 0.2700488E+01                           
+Iteration=  15; root mean square error= 0.2563660E+01                           
+Iteration=  16; root mean square error= 0.2439551E+01                           
+Iteration=  17; root mean square error= 0.2326382E+01                           
+Iteration=  18; root mean square error= 0.2222718E+01                           
+Iteration=  19; root mean square error= 0.2127376E+01                           
+Iteration=  20; root mean square error= 0.2039372E+01                           
+Iteration=  21; root mean square error= 0.1957875E+01                           
+Iteration=  22; root mean square error= 0.1882175E+01                           
+Iteration=  23; root mean square error= 0.1811661E+01                           
+Iteration=  24; root mean square error= 0.1745806E+01                           
+Iteration=  25; root mean square error= 0.1684147E+01                           
+ Min. area AFTER smoothing= 0.1203863E+05                                       
+ Max. area AFTER smoothing= 0.8597838E+05                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         73               
+RECON: done.                                                                    
+smooth/position/esug/1 0 0                                                      
+SMOOTH: position option                                                         
+nodes in point set  =       1782                                                
+SMOOTH: Smooth 2D triangular mesh using ESUG                                    
+ Min. area BEFORE smoothing= 0.1203863E+05                                      
+ Max. area BEFORE smoothing= 0.8841983E+05                                      
+Iteration=   1; root mean square error= 0.1577716E+02                           
+Iteration=   2; root mean square error= 0.7024887E+01                           
+Iteration=   3; root mean square error= 0.4109645E+01                           
+Iteration=   4; root mean square error= 0.3143468E+01                           
+Iteration=   5; root mean square error= 0.2664211E+01                           
+Iteration=   6; root mean square error= 0.2363045E+01                           
+Iteration=   7; root mean square error= 0.2149889E+01                           
+Iteration=   8; root mean square error= 0.1987699E+01                           
+Iteration=   9; root mean square error= 0.1858073E+01                           
+Iteration=  10; root mean square error= 0.1750702E+01                           
+Iteration=  11; root mean square error= 0.1659328E+01                           
+Iteration=  12; root mean square error= 0.1579918E+01                           
+Iteration=  13; root mean square error= 0.1509750E+01                           
+Iteration=  14; root mean square error= 0.1446912E+01                           
+Iteration=  15; root mean square error= 0.1390022E+01                           
+Iteration=  16; root mean square error= 0.1338054E+01                           
+Iteration=  17; root mean square error= 0.1290225E+01                           
+Iteration=  18; root mean square error= 0.1245930E+01                           
+Iteration=  19; root mean square error= 0.1204689E+01                           
+Iteration=  20; root mean square error= 0.1166116E+01                           
+Iteration=  21; root mean square error= 0.1129897E+01                           
+Iteration=  22; root mean square error= 0.1095770E+01                           
+Iteration=  23; root mean square error= 0.1063517E+01                           
+Iteration=  24; root mean square error= 0.1032954E+01                           
+Iteration=  25; root mean square error= 0.1003923E+01                           
+ Min. area AFTER smoothing= 0.1214174E+05                                       
+ Max. area AFTER smoothing= 0.8211222E+05                                       
+recon 0                                                                         
+RECON2D reconnection loop2d:     1                                              
+Recon2d: iteration number=          1 number of flips=         48               
+RECON: done.                                                                    
+filter/1,0,0                                                                    
+FILTER:Use internal epsilonl value =   0.496506830649E-08                       
+FILTER:Dudding duplicate points:           0                                    
+rmpoint compress                                                                
+         0 points removed and          0 elements removed.                      
+RMPOINT: new point count is         1782                                        
+RMPOINT: new element count is       3242                                        
+resetpts/itp                                                                    
+geniee                                                                          
+finish                                                                          
+# CHECK 04b smooth after massage merge                                          
+quality                                                                         
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :          1                          
+elements with aspect ratio b/w .5  and 1. :       3241                          
+min aspect ratio =  0.3937E+00  max aspect ratio =  0.1000E+01                  
+ 
+epsilonvol:   1.1102230E-04                                                     
+---------------------------------------                                         
+element volumes b/w  0.9162E+04 and  0.1421E+05:        12                      
+element volumes b/w  0.1421E+05 and  0.2203E+05:       230                      
+element volumes b/w  0.2203E+05 and  0.3415E+05:       980                      
+element volumes b/w  0.3415E+05 and  0.5296E+05:      1642                      
+element volumes b/w  0.5296E+05 and  0.8211E+05:       378                      
+min volume =   9.1616439E+03  max volume =   8.2112218E+04                      
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+quality edge_max y                                                              
+cmo/addatt//edgemax/VDOUBLE/scalar/nelements                                    
+CMO_ADDATT warning: attribute already exist: cmotri  edgemax                    
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+Edge max normalized by dividing with max value.                                 
+element norm max edge length < .01:                0                            
+element norm edge length b/w .01 and .02:          0                            
+element norm edge length b/w .02 and .05:          0                            
+element norm edge length b/w .05 and .1 :          0                            
+element norm edge length b/w .1  and .2 :          0                            
+element norm edge length b/w .2  and .5 :        142                            
+element norm edge length b/w .5  and 1. :       3100                            
+min max edge length =  0.1000E+03  max max edge length =  0.5217E+03            
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+quality aspect y                                                                
+cmo/addatt//aratio/VDOUBLE/scalar/nelements                                     
+CMO_ADDATT warning: attribute already exist: cmotri  aratio                     
+finish                                                                          
+ 
+epsilonl, epsilonaspect:   4.9650683E-09  1.2239838E-25                         
+--------------------------------------------                                    
+elements with aspect ratio < .01:                    0                          
+elements with aspect ratio b/w .01 and .02:          0                          
+elements with aspect ratio b/w .02 and .05:          0                          
+elements with aspect ratio b/w .05 and .1 :          0                          
+elements with aspect ratio b/w .1  and .2 :          0                          
+elements with aspect ratio b/w .2  and .5 :          1                          
+elements with aspect ratio b/w .5  and 1. :       3241                          
+min aspect ratio =  0.3937E+00  max aspect ratio =  0.1000E+01                  
+-----------------------------------------------------------                     
+      3242 total elements evaluated.                                            
+ 
+cmo/addatt/cmotri/ang_mind/ang_mind                                             
+CMO_ADDATT warning: attribute already exist: cmotri  ang_mind                   
+ADDATT/ang_mind: writing to existing attribute: ang_mind                        
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            2.103231709E+02  5.216513870E+02 3.113282160E+02      3242  
+ 
+cmo printatt cmotri aratio minmax                                               
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ aratio             3.937328212E-01  9.999587255E-01 6.062259043E-01      3242  
+ 
+cmo printatt cmotri ang_mind minmax                                             
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ ang_mind           1.963818340E+01  5.972758105E+01 4.008939765E+01      3242  
+ 
+cmo printatt cmotri edgemax minmax                                              
+ATTRIBUTE NAME              MIN               MAX         DIFFERENCE    LENGTH  
+ edgemax            2.103231709E+02  5.216513870E+02 3.113282160E+02      3242  
+ 
+# dump avs out_tri04b.inp cmotri                                                
+# RUN FINAL reconnect delaunay                                                  
+recon/1/                                                                        
+RECON2D reconnection loop2d:     1                                              
+Matbld0tri: total neg        14 mincoef=  -3.6449838E+01 maxcoef=   1.3676568E+0
+                                                                               3
+Negative coeff2d:        sort   edge     vor_coeff        row_node  col_node    
+Negative coeff2d:          1       470 -3.6449838E+01       539       991       
+Negative coeff2d:          2      1552 -2.7725538E+01      1680      1715       
+Negative coeff2d:          3      1061 -7.7797114E+00      1593       221       
+Negative coeff2d:          4       469 -1.2302223E+01      1676       544       
+Negative coeff2d:          5      1133 -1.4035009E+01       342       561       
+Negative coeff2d:          6       487 -1.9353286E+01      1062       561       
+Negative coeff2d:          7      1052 -9.4245117E+00       755       319       
+Negative coeff2d:          8      1086 -1.9091311E+01      1417       756       

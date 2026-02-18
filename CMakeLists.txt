@@ -210,6 +210,7 @@ file(
     "${SRC_UTIL}/*.f"
     "${SRC_UTIL}/*.F"
     "${SRC_UTIL}/*.f90"
+    "${SRC_UTIL}/*.F90"
 )
 
 # Grab `src/` source files
@@ -221,10 +222,11 @@ file(
     "${SRC_CORE}/*.f"
     "${SRC_CORE}/*.F"
     "${SRC_CORE}/*.f90"
+    "${SRC_CORE}/*.F90"
 )
 
 # Files we don't want compiled
-list(FILTER SRC_UTIL_FILES EXCLUDE REGEX ".*mm2000_header.F$")
+list(FILTER SRC_UTIL_FILES EXCLUDE REGEX ".*mm2000_header.F90$")
 list(FILTER SRC_CORE_FILES EXCLUDE REGEX ".*lagrit_main.f$")
 
 message(STATUS "Using Compiler Settings:")
